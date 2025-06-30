@@ -66,7 +66,7 @@ export default function MountRushmore() {
                 {results.map((album) => {
                     return (<Card className="m-1">
                     <CardBody className="flex flex-row gap-8">
-                        <Image src={album.url} width={150} height={150}></Image>
+                        <Image fallbackSrc="https://raw.githubusercontent.com/aryamaan-exe/musicnerds/refs/heads/main/pages/fallback.png" src={album.url} width={150} height={150}></Image>
                         <div>
                             <h3 className="text-xl font-bold mb-4">{album.name}</h3>
                             <p className="text-lg mb-4">{album.artist}</p>
