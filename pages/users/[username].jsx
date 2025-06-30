@@ -63,6 +63,9 @@ export default function Profile() {
     const [fourth, setFourth] = useState("");
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
     const { mtIsOpen, mtOnOpen, mtOnOpenChange } = useDisclosure();
+    const [x1, setX1] = useState(false);
+    const [x2, setX2] = useState(false);
+    const [x3, setX3] = useState(false);
     const [x4, setX4] = useState(false);
     const observer = useRef();
 
@@ -309,28 +312,55 @@ export default function Profile() {
                     <div className="w-full">
                         {first == "" ? <Button className="w-full h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={mtOnOpen}>
                             <p className="text-4xl">+</p>
-                        </Button> : <Image isZoomed 
-                        src={first} 
-                        width={150} 
-                        height={150} 
-                        className="w-full h-auto object-cover"
-                        />}
+                        </Button> :
+                        <div onPointerEnter={() => {setX1(true)}} onPointerLeave={() => {setX1(false)}} className="relative z-0">
+                            <Button className={x1 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
+                                removeMtRush(username, 1)
+                                setFirst("")
+                            }}>
+                                <Close />
+                            </Button>
+                            <Image isZoomed 
+                            src={first} 
+                            width={150} 
+                            height={150} 
+                            className="w-full h-auto object-cover z-5"
+                            />
+                        </div>}
                     </div>
                     <div className="w-full">
-                        {second == "" ? <Button className="w-[95%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}}><p className="text-4xl">+</p></Button> : <Image isZoomed 
-                        src={second} 
-                        width={150} 
-                        height={150} 
-                        className="w-full h-auto object-cover"
-                        />}
+                        {second == "" ? <Button className="w-[95%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}}><p className="text-4xl">+</p></Button>
+                        : <div onPointerEnter={() => {setX2(true)}} onPointerLeave={() => {setX2(false)}} className="relative z-0">
+                            <Button className={x2 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
+                                removeMtRush(username, 2)
+                                setSecond("")
+                            }}>
+                                <Close />
+                            </Button>
+                            <Image isZoomed 
+                            src={second} 
+                            width={150} 
+                            height={150} 
+                            className="w-full h-auto object-cover z-5"
+                            />
+                        </div>}
                     </div>
                     <div className="w-full">
-                        {third == "" ? <Button className="w-full h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}}><p className="text-4xl">+</p></Button> : <Image isZoomed 
-                        src={third} 
-                        width={150} 
-                        height={150} 
-                        className="w-full h-auto object-cover"
-                        />}
+                        {third == "" ? <Button className="w-full h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}}><p className="text-4xl">+</p></Button> 
+                        : <div onPointerEnter={() => {setX3(true)}} onPointerLeave={() => {setX3(false)}} className="relative z-0">
+                            <Button className={x3 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
+                                removeMtRush(username, 3)
+                                setThird("")
+                            }}>
+                                <Close />
+                            </Button>
+                            <Image isZoomed 
+                                src={third} 
+                                width={150} 
+                                height={150} 
+                                className="w-full h-auto object-cover z-5"
+                                />
+                        </div>}
                     </div>
                     <div className="w-full">
                         {fourth == "" ? <Button className="w-[94%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}}><p className="text-4xl">+</p></Button> 
