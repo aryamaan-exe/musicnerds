@@ -62,7 +62,6 @@ export default function Profile() {
     const [third, setThird] = useState("");
     const [fourth, setFourth] = useState("");
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
-    const { mtIsOpen, mtOnOpen, mtOnOpenChange } = useDisclosure();
     const [x1, setX1] = useState(false);
     const [x2, setX2] = useState(false);
     const [x3, setX3] = useState(false);
@@ -310,7 +309,9 @@ export default function Profile() {
                 
                 <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 gap-4 overflow-hidden mb-8 lg:w-[610px] md:w-[310px] w-[160px] lg:h-[150px] md:h-[300px] h-[600px]">
                     <div className="w-full">
-                        {first == "" ? <Button className="w-full h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={mtOnOpen}>
+                        {first == "" ? <Button className="w-full h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
+                            router.push("/mountrushmore?spot=1")
+                        }}>
                             <p className="text-4xl">+</p>
                         </Button> :
                         <div onPointerEnter={() => {setX1(true)}} onPointerLeave={() => {setX1(false)}} className="relative z-0">
@@ -329,7 +330,9 @@ export default function Profile() {
                         </div>}
                     </div>
                     <div className="w-full">
-                        {second == "" ? <Button className="w-[95%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}}><p className="text-4xl">+</p></Button>
+                        {second == "" ? <Button className="w-[95%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
+                            router.push("/mountrushmore?spot=2")
+                        }}><p className="text-4xl">+</p></Button>
                         : <div onPointerEnter={() => {setX2(true)}} onPointerLeave={() => {setX2(false)}} className="relative z-0">
                             <Button className={x2 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
                                 removeMtRush(username, 2)
@@ -346,7 +349,9 @@ export default function Profile() {
                         </div>}
                     </div>
                     <div className="w-full">
-                        {third == "" ? <Button className="w-full h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}}><p className="text-4xl">+</p></Button> 
+                        {third == "" ? <Button className="w-full h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
+                            router.push("/mountrushmore?spot=3")
+                        }}><p className="text-4xl">+</p></Button> 
                         : <div onPointerEnter={() => {setX3(true)}} onPointerLeave={() => {setX3(false)}} className="relative z-0">
                             <Button className={x3 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
                                 removeMtRush(username, 3)
@@ -363,7 +368,9 @@ export default function Profile() {
                         </div>}
                     </div>
                     <div className="w-full">
-                        {fourth == "" ? <Button className="w-[94%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}}><p className="text-4xl">+</p></Button> 
+                        {fourth == "" ? <Button className="w-[94%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
+                            router.push("/mountrushmore?spot=4")
+                        }}><p className="text-4xl">+</p></Button> 
                         : <div onPointerEnter={() => {setX4(true)}} onPointerLeave={() => {setX4(false)}} className="relative z-0">
                             <Button className={x4 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
                                 removeMtRush(username, 4)
