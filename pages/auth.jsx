@@ -3,35 +3,54 @@ import { Navbar } from "../components/navbar";
 import { Footer } from "../components/footer";
 import { Button, Input } from "@heroui/react";
 import { title, subtitle } from "@/components/primitives";
+import { useRouter } from "next/router";
+import axios from "axios";
 
-const Auth = () => {
+export default function Auth() {
+    axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL;
+
+    async function authHandler(authMode, username, password, email) {
+        if (authMode == "register") {
+            try {
+                const response = await axios.post("/register", {
+                    username: username,
+                    email: email,
+                    password: password
+                });
+
+                return response;
+            } catch (err) {
+                if (err.response) {
+                    return { success: false, status: err.response.status, error: err.response.data.error };
+                } else {
+                    return { success: false, error: err.message };
+                }
+            }
+        } else {
+            try {
+                const response = await axios.post("/login", {
+                    username: username,
+                    password: password
+                });
+
+                return response;
+            } catch (err) {
+                if (err.response) {
+                    return { success: false, status: err.response.status, error: err.response.data.error };
+                } else {
+                    return { success: false, error: err.message };
+                }
+            }
+        }
+    }
+
     const [authMode, setAuthMode] = useState("login");
     const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-
-    async function authHandler(authMode, username, password, email=null) {
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/${authMode}`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: email == null ? JSON.stringify({username, password}) : JSON.stringify({username, email, password}),
-                credentials: "include"
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                return { success: true, message: data.message };
-            } else {
-                return { success: false, error: data.error };
-            }
-        } catch (err) {
-            console.error(err);
-            return { success: false, error: "Connection error. Please try again." };
-        }
-    }
+    const router = useRouter();
 
     return (
         <>
@@ -39,7 +58,7 @@ const Auth = () => {
             <div className="flex lg:ml-64 ml-8 items-center h-[85vh]">
                 <div className="mr-32">
                     <h1 className="text-4xl mb-4">{authMode === "login" ? "Login" : "Register"}</h1>
-                    {error && <p className="text-red-500 mb-4">{error}</p>}
+                    {error && <p className="text-danger mb-4">{error}</p>}
                     {authMode === "register" && (
                         <Input 
                             label="Email" 
@@ -71,10 +90,15 @@ const Auth = () => {
                                 password, 
                                 authMode === "register" ? email : null
                             );
-                            if (result.success) {
-                                window.location.href = "/";
+                            
+                            
+                            if (result.status == 200) {
+                                window.localStorage.setItem("username", username);
+                                const authToken = result.data.authToken
+                                window.localStorage.setItem("authToken", authToken);
+                                router.push(`/users/${username}`)
                             } else {
-                                setError(result.error);
+                                setError(result.error || "Unknown error");
                             }
                             setLoading(false);
                         }}
@@ -101,5 +125,3 @@ const Auth = () => {
         </>
     );
 };
-
-export default Auth;
