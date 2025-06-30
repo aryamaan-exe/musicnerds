@@ -34,9 +34,11 @@ type PfpChange struct {
   Pfp       string `json:"pfp"`
 }
 
-type Remove struct {
+type MtRush struct {
 	Username  string `json:"username"`
-	i 		  int 	 `json:"i"`
+	AuthToken string `json:"authToken"`
+	I 		  int 	 `json:"i"`
+	Album	  string `json:"album"`
 }
 
 func getAuthToken(password string, username string) string {
@@ -53,6 +55,7 @@ func authenticated(username string, authToken string, db *sql.DB) (bool) {
 	var password string
 	rows.Scan(&password)
 	token := getAuthToken(password, username)
+	fmt.Println(string(token) == authToken)
 	return string(token) == authToken
 }
 
@@ -266,12 +269,27 @@ func main() {
 		row := db.QueryRow("SELECT id FROM users WHERE username=$1", username)
 		var id int
 		row.Scan(&id)
+		rows, err := db.Query("SELECT * FROM mtRush")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer rows.Close()
+		var first string
+		var second string
+		var third string
+		var fourth string
+		for rows.Next() {
+			err = rows.Scan(&id, &first, &second, &third, &fourth)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		err = rows.Err()
+		if err != nil {
+			log.Fatal(err)
+		}
 		row = db.QueryRow("SELECT * FROM mtRush WHERE id=$1", id)
 		row.Scan(&id)
-		var first string = "https://upload.wikimedia.org/wikipedia/en/5/5e/Madvillainy_cover.png"
-		var second string = "https://upload.wikimedia.org/wikipedia/en/5/5e/Madvillainy_cover.png"
-		var third string = "https://upload.wikimedia.org/wikipedia/en/5/5e/Madvillainy_cover.png"
-		var fourth string = "https://upload.wikimedia.org/wikipedia/en/5/5e/Madvillainy_cover.png"
 		row.Scan(&first, &second, &third, &fourth)
 
 		c.JSON(200, gin.H{
@@ -281,16 +299,20 @@ func main() {
 	})
 
 	r.POST("/removeMtRush", func(c *gin.Context) {
-		var remove Remove
+		var remove MtRush
 		if err := c.BindJSON(&remove); err != nil {
             c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
             return
+		}
+		if !authenticated(remove.Username, remove.AuthToken, db) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+			return
 		}
 		row := db.QueryRow("SELECT id FROM users WHERE username=$1", remove.Username)
 		var id int
 		row.Scan(&id)
 		var index string
-		switch remove.i {
+		switch remove.I {
 		case 1:
 			index = "first"
 		case 2:
@@ -312,7 +334,43 @@ func main() {
 		})
 	})
 
-	
+	r.POST("/updateMtRush", func(c *gin.Context) {
+		var update MtRush
+		if err := c.BindJSON(&update); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+            return
+		}
+		if !authenticated(update.Username, update.AuthToken, db) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+			return
+		}
+		row := db.QueryRow("SELECT id FROM users WHERE username=$1", update.Username)
+		var id int
+		row.Scan(&id)
+		var index string
+		switch update.I {
+		case 1:
+			index = "first"
+		case 2:
+			index = "second"
+		case 3:
+			index = "third"
+		default:
+			index = "fourth"
+		}
+
+		var x string
+		err = db.QueryRow(fmt.Sprintf("UPDATE mtRush SET %s=$1 WHERE id=$2 RETURNING first", index), update.Album, id).Scan(&x)
+		fmt.Println(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Couldn't update album"})
+			return
+		}
+
+		c.JSON(200, gin.H{
+			"message": "Updated Mt. Rushmore",
+		})
+	})
 
 	r.Run(":8000")
 }
