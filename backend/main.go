@@ -268,10 +268,10 @@ func main() {
 		row.Scan(&id)
 		row = db.QueryRow("SELECT * FROM mtRush WHERE id=$1", id)
 		row.Scan(&id)
-		var first string
-		var second string
-		var third string
-		var fourth string
+		var first string = "https://upload.wikimedia.org/wikipedia/en/5/5e/Madvillainy_cover.png"
+		var second string = "https://upload.wikimedia.org/wikipedia/en/5/5e/Madvillainy_cover.png"
+		var third string = "https://upload.wikimedia.org/wikipedia/en/5/5e/Madvillainy_cover.png"
+		var fourth string = "https://upload.wikimedia.org/wikipedia/en/5/5e/Madvillainy_cover.png"
 		row.Scan(&first, &second, &third, &fourth)
 
 		c.JSON(200, gin.H{
