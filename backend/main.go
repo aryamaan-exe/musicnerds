@@ -12,6 +12,7 @@ import (
 	"time"
 	"bytes"
 	"context"
+	"strconv"
 	"encoding/base64"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -102,8 +103,8 @@ func main() {
             return
         }
 
-		db.Exec("DELETE FROM users")
-		db.Exec("DELETE FROM mtrush")
+		// db.Exec("DELETE FROM users")
+		// db.Exec("DELETE FROM mtrush")
 		_, err = db.Exec("INSERT INTO users (username, password, email, bio, pfp) VALUES ($1, $2, $3, '', 'https://images.unsplash.com/broken')", user.Username, string(hashedPassword), user.Email)
 		if err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Username is taken, choose another"})
@@ -370,6 +371,52 @@ func main() {
 		c.JSON(200, gin.H{
 			"message": "Updated Mt. Rushmore",
 		})
+	})
+
+	r.GET("/feed", func(c *gin.Context) {
+		username := c.Query("username")
+		page, err := strconv.Atoi(c.Query("page"))
+
+		if err != nil {
+			return
+		}
+		
+		offset := (page - 1) * 10
+		row := db.QueryRow("SELECT id FROM users WHERE username=$1", username)
+		var id int
+		row.Scan(&id)
+        rows, err := db.Query("SELECT postid, title, body, image, timestamp FROM feed WHERE id=$1 LIMIT 10 OFFSET $2", id, offset)
+        if err != nil {
+			fmt.Println(err)
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database"})
+            return
+        }
+        defer rows.Close()
+		
+		var feed []map[string]interface{}
+        for rows.Next() {
+            var postid int
+            var title, body, image, timestamp string
+            err = rows.Scan(&postid, &title, &body, &image, &timestamp)
+            if err != nil {
+				fmt.Println("b")
+                c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan row"})
+                return
+            }
+
+            feed = append(feed, map[string]interface{}{
+                "postid": 	 postid,
+                "title":  	 title,
+                "body":  	 body,
+                "image":  	 image,
+				"timestamp": timestamp,
+            })
+        }
+
+		c.JSON(http.StatusOK, gin.H{
+            "message": fmt.Sprintf("Page %d of %s's feed obtained", page, username),
+            "feed":    feed,
+        })
 	})
 
 	r.Run(":8000")

@@ -1,7 +1,7 @@
 import { Navbar } from "../../components/navbar";
 import { Footer } from "../../components/footer";
 import { useRouter } from 'next/router';
-import { Modal, ModalHeader, ModalBody, ModalContent, ModalFooter, Link, Image, Avatar, Button, Card, CardHeader, CardBody, CardFooter, Skeleton, Textarea, useDisclosure, Input } from "@heroui/react";
+import { Listbox, ListboxItem, Spinner, Modal, ModalHeader, ModalBody, ModalContent, ModalFooter, Link, Image, Avatar, Button, Card, CardHeader, CardBody, CardFooter, Skeleton, Textarea, useDisclosure, Input } from "@heroui/react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import imageCompression from "browser-image-compression"
@@ -23,9 +23,13 @@ export function Close() {
     return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
             </svg>
-
-
 }
+
+export const ListboxWrapper = ({children}) => (
+    <div className="w-full max-w-[260px] border-small px-1 py-2 rounded-small border-default-200 dark:border-default-100">
+    {children}
+    </div>
+);
 
 export default function Profile() {
 
@@ -46,7 +50,7 @@ export default function Profile() {
 
     const router = useRouter();
     const username = router.query.username;
-    const [feed, setFeed] = useState([{title: "Just finished listening to Madvillainy", body: "This was my 1000th listen!", id: 1, image: "https://upload.wikimedia.org/wikipedia/en/5/5e/Madvillainy_cover.png", isLoaded: true}]);
+    const [feed, setFeed] = useState([]);
     const [loading, setLoading] = useState(false);
     const [pfpLoading, setPfpLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
@@ -68,39 +72,53 @@ export default function Profile() {
     const [x2, setX2] = useState(false);
     const [x3, setX3] = useState(false);
     const [x4, setX4] = useState(false);
+    const [hidden, setHidden] = useState(true);
     const observer = useRef();
 
     const lastCardRef = useCallback((node) => {
         if (loading) return;
         if (observer.current) observer.current.disconnect();
-        observer.current = new IntersectionObserver((entries) => {
+        observer.current = new IntersectionObserver(async (entries) => {
             if (entries[0].isIntersecting) {
-                loadMoreItems();
+                await loadFeed(router.query.username, page);
             }
         });
         if (node) observer.current.observe(node);
     }, [loading, hasMore]);
 
-    const loadMoreItems = () => {
+    async function getFeed(username, page) {
+        try {
+            const response = await axios.get("/feed", {
+                params: {
+                    username: username,
+                    page: page
+                }
+            });
+
+            return response.data;
+        } catch (err) {
+            if (err.response) {
+                return { success: false, status: err.response.status, error: err.response.data.error };
+            } else {
+                return { success: false, error: err.message };
+            }
+        }
+    }
+
+    const loadFeed = async (username, page) => {
         if (loading || !hasMore) return;
 
         setLoading(true);
-        const newItems = Array.from({ length: 2 }, (_, i) => ({title: "Just finished listening to Madvillainy", body: "This was my 1000th listen!", id: i, image: "https://upload.wikimedia.org/wikipedia/en/5/5e/Madvillainy_cover.png", isLoaded: false}));
-        const updatedFeed = [...feed, ...newItems];
-        setFeed(updatedFeed);
-
-        setTimeout(() => {
-            setFeed(updatedFeed.map((post) => {
-                return !post.isLoaded ? {...post, isLoaded: true} : post;
-            }));
-
-            if (page === 5) {
-                setHasMore(false);
-            }
-            
-            setPage(page + 1);
-            setLoading(false);
-        }, 1000);
+        const newItems = (await getFeed(username, page)).feed;
+        try {
+            const updatedFeed = [...feed, ...newItems];
+            setFeed(updatedFeed);
+        } catch (err) {
+            console.log(err);
+        }
+        
+        setLoading(false);
+        setPage(page + 1);
     };
 
     async function changeBio(username, authToken, bio) {
@@ -184,19 +202,9 @@ export default function Profile() {
         }
     }
 
-    useEffect(() => {
-        const handleScroll = () => {
-            if (
-                window.innerHeight + window.scrollY >=
-                document.body.offsetHeight
-            ) {
-                loadMoreItems();
-            }
-        };
+    async function newPost(type) {
 
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, [loading, hasMore]);
+    }
     
     useEffect(() => {
         async function x() {
@@ -216,6 +224,7 @@ export default function Profile() {
             setSecond(mtRush[1]);
             setThird(mtRush[2]);
             setFourth(mtRush[3]);
+            await loadFeed(router.query.username, 1);
         }
         x();
     }, [router.query.username]);
@@ -230,13 +239,13 @@ export default function Profile() {
                     <p>Oops! We couldn't find a user with that username.</p>
                 </div>
             </div>
-        : <div>
+        : <div className="h-[85vh]">
 
             <div className="flex justify-center items-center my-8 mx-4">
                 <Card>
 
                     <CardHeader>
-                        <Link onPress={onOpen}>
+                        {me && <Link onPress={onOpen}>
                             <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
                                 <ModalContent>
                                     {(onClose) => (
@@ -276,7 +285,12 @@ export default function Profile() {
                             className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
                             src={pfp} key={pfp}
                             />
-                        </Link>
+                        </Link>}
+                        {!me && <Avatar
+                            showFallback
+                            className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
+                            src={pfp} key={pfp}
+                            />}
                         <div>
                             <p className="text-xl font-bold">{username}</p>
                             <p>1000 albums listened</p>
@@ -395,44 +409,55 @@ export default function Profile() {
 
                 <h2>Feed</h2>
 
+                {me && <Button color="secondary" className="mb-2" onPress={() => {
+                    setHidden(!hidden);
+                }}><Add />New Post</Button>}
+                
+                {!hidden && <ListboxWrapper>
+                <Listbox onAction={(key) => {
+                    setHidden(!hidden);
+                    router.push(`/${key}`)
+                }}>
+                    <ListboxItem key="new">New post</ListboxItem>
+                    <ListboxItem key="rec">New recommendation</ListboxItem>
+                    <ListboxItem key="track">New album listened</ListboxItem>
+                </Listbox>
+                </ListboxWrapper>}
+
                 <div>
-                    
-                    {feed.map((post, index) => {
+                    {loading ? <Spinner size="lg" className="mt-4" color="secondary" /> :
+                    feed.map((post, index) => {
                         if (feed.length === index + 1) {
                             return (
                                 <Card key={post.id} className="m-4">
-                                    <Skeleton isLoaded={post.isLoaded}>
-                                        <div className="md:flex p-4">
-                                            <Image src={post.image} width={150} height={150}></Image>
-                                                <div className="ml-4">
-                                                    <CardHeader>
-                                                        <h3 className="text-lg font-semibold">{post.title}</h3>
-                                                    </CardHeader>
-                                                    <CardBody>
-                                                        {post.body}
-                                                    </CardBody>
-                                                </div>
+                                    <div className="md:flex p-4">
+                                        <Image src={post.image} width={150} height={150}></Image>
+                                        <div className="ml-4">
+                                            <CardHeader>
+                                                <h3 className="text-lg font-semibold">{post.title}</h3>
+                                            </CardHeader>
+                                            <CardBody>
+                                                {post.body}
+                                            </CardBody>
                                         </div>
-                                    </Skeleton>
-                                    <div ref={lastCardRef}></div>
+                                    </div>
+                                <div ref={lastCardRef}></div>
                                 </Card>
                             )
                         } else {
                             return (
                                 <Card key={post.id} className="m-4">
-                                    <Skeleton isLoaded={post.isLoaded}>
-                                        <div className="md:flex p-4">
-                                            <Image isZoomed src={post.image} width={150} height={150}></Image>
-                                                <div className="ml-4">
-                                                    <CardHeader>
-                                                        <h3 className="text-lg font-semibold">{post.title}</h3>
-                                                    </CardHeader>
-                                                    <CardBody>
-                                                        {post.body}
-                                                    </CardBody>
-                                                </div>
+                                    <div className="md:flex p-4">
+                                        <Image isZoomed src={post.image} width={150} height={150}></Image>
+                                        <div className="ml-4">
+                                            <CardHeader>
+                                                <h3 className="text-lg font-semibold">{post.title}</h3>
+                                            </CardHeader>
+                                            <CardBody>
+                                                {post.body}
+                                            </CardBody>
                                         </div>
-                                    </Skeleton>
+                                    </div>
                                 </Card>
                             )
                         }
