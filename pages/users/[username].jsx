@@ -334,8 +334,8 @@ export default function Profile() {
                         </Button> :
                         <div onPointerEnter={() => {setX1(true)}} onPointerLeave={() => {setX1(false)}} className="relative z-0">
                             <Button className={x1 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
-                                removeMtRush(username, 1)
-                                setFirst("")
+                                removeMtRush(username, 1);
+                                setFirst("");
                             }}>
                                 <Close />
                             </Button>
@@ -353,8 +353,8 @@ export default function Profile() {
                         }}><p className="text-4xl">+</p></Button>
                         : <div onPointerEnter={() => {setX2(true)}} onPointerLeave={() => {setX2(false)}} className="relative z-0">
                             <Button className={x2 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
-                                removeMtRush(username, 2)
-                                setSecond("")
+                                removeMtRush(username, 2);
+                                setSecond("");
                             }}>
                                 <Close />
                             </Button>
@@ -372,8 +372,8 @@ export default function Profile() {
                         }}><p className="text-4xl">+</p></Button> 
                         : <div onPointerEnter={() => {setX3(true)}} onPointerLeave={() => {setX3(false)}} className="relative z-0">
                             <Button className={x3 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
-                                removeMtRush(username, 3)
-                                setThird("")
+                                removeMtRush(username, 3);
+                                setThird("");
                             }}>
                                 <Close />
                             </Button>
@@ -391,8 +391,8 @@ export default function Profile() {
                         }}><p className="text-4xl">+</p></Button> 
                         : <div onPointerEnter={() => {setX4(true)}} onPointerLeave={() => {setX4(false)}} className="relative z-0">
                             <Button className={x4 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
-                                removeMtRush(username, 4)
-                                setFourth("")
+                                removeMtRush(username, 4);
+                                setFourth("");
                             }}>
                                 <Close />
                             </Button>
