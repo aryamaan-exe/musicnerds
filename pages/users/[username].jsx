@@ -27,6 +27,24 @@ export function Close() {
             </svg>
 }
 
+export function HeartIcon({ fillColor, strokeColor }) {
+    return <svg xmlns="http://www.w3.org/2000/svg" fill={fillColor} viewBox="0 0 24 24" strokeWidth={1.5} stroke={strokeColor} className="size-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+            </svg>
+}
+
+export function ShareIcon() {
+    return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+            </svg>
+}
+
+export function ReportIcon() {
+    return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
+            </svg>
+}
+
 export const ListboxWrapper = ({children}) => (
     <div className="w-full max-w-[260px] border-small px-1 py-2 rounded-small border-default-200 dark:border-default-100">
     {children}
@@ -40,7 +58,11 @@ export default function Profile() {
             const response = await axios.get("/user", {
                 params: { username, authToken }
             });
-            return response;
+            const response2 = await axios.get("/likes", {
+                params: { username }
+            });
+
+            return {...response.data, ...response2.data};
         } catch (err) {
             console.log(err);
             return false;
@@ -62,6 +84,7 @@ export default function Profile() {
     const [bio, setBio] = useState("");
     const [pfp, setPfp] = useState("https://images.unsplash.com/broken");
     const [me, setMe] = useState(false);
+    const [liked, setLiked] = useState([]);
     const [editing, setEditing] = useState(false);
     const [authToken, setAuthToken] = useState("");
     const [newBio, setNewBio] = useState("");
@@ -209,6 +232,23 @@ export default function Profile() {
             }
         }
     }
+
+    async function likePost(postID, remove) {
+        try {
+            const response = await axios.post("/like", {
+                username, authToken, postID, remove
+            });
+
+            return response;
+        } catch (err) {
+            console.log(err);
+            if (err.response) {
+                return { success: false, status: err.response.status, error: err.response.data.error };
+            } else {
+                return { success: false, error: err.message };
+            }
+        }
+    }
     
     useEffect(() => {
         async function x() {
@@ -219,9 +259,10 @@ export default function Profile() {
             if (!req) {
                 set404(true);
             } else {
-                setBio(req.data.bio);
-                setPfp(req.data.pfp);
-                setMe(req.data.me);
+                setBio(req.bio);
+                setPfp(req.pfp);
+                setMe(req.me);
+                setLiked(req.likes || []);
             }
             const mtRush = (await getMtRush(username)).data.mtRush;
             setFirst(mtRush[0]);
@@ -435,15 +476,30 @@ export default function Profile() {
                             const isLast = index === feed.length - 1;
 
                             return (
-                            <Card key={post.id} className="m-4 min-w-full" ref={isLast ? lastCardRef : null}>
+                            <Card key={post.postid} className="m-4 min-w-full" ref={isLast ? lastCardRef : null}>
                                 <div className="md:flex p-4">
-                                    {post.image && <Image src={post.image} width={150} height={150} />}
+                                    {post.image && <Image isZoomed src={post.image} width={150} height={150} />}
                                     <div className="ml-4">
                                         <CardHeader>
                                             <h3 className="text-lg font-semibold">{post.title}</h3>
                                         </CardHeader>
-                                        <CardBody>{post.body}</CardBody>
-                                        <CardFooter><p className="text-gray-400">{dayjs(post.timestamp).fromNow()}</p></CardFooter>
+                                        <CardBody>
+                                            {post.body}
+                                            <p className="text-gray-400 mt-8">{dayjs(post.timestamp).fromNow()}</p>
+                                        </CardBody>
+                                        <CardFooter className="gap-2">
+                                            <Button isIconOnly variant="flat" radius="full" onPress={async () => {
+                                                const remove = liked.includes(post.postid);
+                                                await likePost(post.postid, remove);
+                                                setLiked(prev =>
+                                                        remove
+                                                        ? prev.filter(id => id !== post.postid)
+                                                        : [...prev, post.postid]               
+                                                );
+                                            }}><HeartIcon strokeColor={liked.includes(post.postid) ? "#f31260" : "white"} fillColor={liked.includes(post.postid) ? "#f31260" : "none"} /></Button>
+                                            <Button isIconOnly variant="flat" radius="full"><ShareIcon /></Button>
+                                            <Button isIconOnly variant="flat" radius="full"><ReportIcon /></Button>
+                                        </CardFooter>
                                     </div>
                                 </div>
                             </Card>

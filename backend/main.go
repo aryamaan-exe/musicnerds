@@ -46,9 +46,15 @@ type Post struct {
 	Username  string `json:"username"`
 	AuthToken string `json:"authToken"`
 	Image	  string `json:"image"`
-	Timestamp string `json:"timestamp"`
 	Title 	  string `json:"title"`
 	Body 	  string `json:"body"`
+}
+
+type Like struct {
+	Username  string `json:"username"`
+	AuthToken string `json:"authToken"`
+	PostID	  int 	 `json:"postID"`
+	Remove	  bool	 `json:"remove"`
 }
 
 func getAuthToken(password string, username string) string {
@@ -387,9 +393,11 @@ func main() {
 		var feed []map[string]interface{}
         for rows.Next() {
             var postid int
-            var title, body, image, timestamp string
+            var title, body, image string
+			var timestamp time.Time
             err = rows.Scan(&postid, &title, &body, &image, &timestamp)
             if err != nil {
+				fmt.Println(err)
                 c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan row"})
                 return
             }
@@ -399,7 +407,7 @@ func main() {
                 "title":  	 title,
                 "body":  	 body,
                 "image":  	 image,
-				"timestamp": timestamp,
+				"timestamp": timestamp.Format(time.RFC3339),
             })
         }
 
@@ -421,16 +429,63 @@ func main() {
 		row.Scan(&id)
 
 		if authenticated(post.Username, post.AuthToken, db) {
-			_, err = db.Exec("INSERT INTO feed (id, title, body, image, timestamp) VALUES ($1, $2, $3, $4, $5)", id, post.Title, post.Body, post.Image, post.Timestamp)
+			_, err = db.Exec("INSERT INTO feed (id, title, body, image) VALUES ($1, $2, $3, $4)", id, post.Title, post.Body, post.Image)
 			if err != nil {
-				_, err = db.Exec("INSERT INTO feed (id, title, body, image, timestamp) VALUES ($1, $2, $3, $4, $5)", id, post.Title, post.Body, post.Timestamp)
-				if err != nil {
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database"})
-					return
-				}
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database"})
 				return
 			}
 			c.JSON(http.StatusOK, gin.H{"message": "Post added"})
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		}
+		
+	})
+
+	r.GET("/likes", func(c *gin.Context) {
+		row := db.QueryRow("SELECT id FROM users WHERE username=$1", c.Query("username"))
+		var id int
+		row.Scan(&id)
+
+		rows, err := db.Query("SELECT postid FROM likes WHERE id=$1", id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error querying database"})
+            return
+		}
+
+		var likes []int
+		var postID int
+		for rows.Next() {
+			rows.Scan(&postID)
+			likes = append(likes, postID)
+		}
+
+		c.JSON(200, gin.H{"likes": likes})
+
+	})
+
+	r.POST("/like", func(c *gin.Context) {
+		var like Like
+		
+		if err := c.BindJSON(&like); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+            return
+		}
+		row := db.QueryRow("SELECT id FROM users WHERE username=$1", like.Username)
+		var id int
+		row.Scan(&id)
+
+		if authenticated(like.Username, like.AuthToken, db) {
+			if like.Remove {
+				_, err = db.Exec("DELETE FROM likes WHERE postid=$1 AND id=$2", like.PostID, id)
+			} else {
+				fmt.Println(like.PostID, id);
+				_, err = db.Exec("INSERT INTO likes VALUES ($1, $2)", like.PostID, id)
+			}
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database"})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"message": "Post liked"})
 		} else {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		}

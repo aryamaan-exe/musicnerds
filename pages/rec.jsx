@@ -22,12 +22,10 @@ export default function Rec() {
     } = useAlbumSearch(process.env.NEXT_PUBLIC_LASTFM_KEY);
 
     const onSearch = (q) => handleSearch(q);
-    const timestamp = (new Date()).toISOString();
     const onAdd = async (album) => {
         await axios.post("/post", { 
             username,
             authToken,
-            timestamp,
             "image": album.url,
             "title": `Listen to ${album.name}`,
             "body": `${username} recommends ${album.name} by ${album.artist}.`

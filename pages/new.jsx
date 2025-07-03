@@ -20,8 +20,7 @@ export default function New() {
 
     async function newPost(title, postContent) {
         try {
-            const timestamp = (new Date()).toISOString();
-            const response = await axios.post("/post", {username, authToken, title, "body": postContent, timestamp});
+            const response = await axios.post("/post", {username, authToken, title, "body": postContent});
             return response;
         } catch (err) {
             console.log(err);
