@@ -4,6 +4,8 @@ import { useRouter } from 'next/router';
 import { Listbox, ListboxItem, Spinner, Modal, ModalHeader, ModalBody, ModalContent, ModalFooter, Link, Image, Avatar, Button, Card, CardHeader, CardBody, CardFooter, Skeleton, Textarea, useDisclosure, Input } from "@heroui/react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import imageCompression from "browser-image-compression"
 
 export function Add() {
@@ -47,6 +49,7 @@ export default function Profile() {
 
     axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL;
     axios.defaults.timeout = 10000;
+    dayjs.extend(relativeTime);
 
     const router = useRouter();
     const username = router.query.username;
@@ -110,6 +113,11 @@ export default function Profile() {
 
         setLoading(true);
         const newItems = (await getFeed(username, page)).feed;
+        if (!newItems || newItems.length === 0) {
+            setHasMore(false);
+            return;
+        }
+
         try {
             const updatedFeed = [...feed, ...newItems];
             setFeed(updatedFeed);
@@ -201,10 +209,6 @@ export default function Profile() {
             }
         }
     }
-
-    async function newPost(type) {
-
-    }
     
     useEffect(() => {
         async function x() {
@@ -229,243 +233,233 @@ export default function Profile() {
         x();
     }, [router.query.username]);
 
-    return <>
+    return <div className="min-h-screen flex flex-col">
         <Navbar />
 
-        {notFound ? 
-            <div className="flex lg:ml-64 ml-8 items-center h-[85vh]">
-                <div>
-                    <h1>User not found</h1>
-                    <p>Oops! We couldn't find a user with that username.</p>
+        <main className="flex-grow">
+
+            {notFound ? 
+                <div className="flex lg:ml-64 ml-8 items-center h-[85vh]">
+                    <div>
+                        <h1>User not found</h1>
+                        <p>Oops! We couldn't find a user with that username.</p>
+                    </div>
                 </div>
-            </div>
-        : <div className="h-[85vh]">
+            : <div>
 
-            <div className="flex justify-center items-center my-8 mx-4">
-                <Card>
+                <div className="flex justify-center items-center my-8 mx-4">
+                    <Card>
 
-                    <CardHeader>
-                        {me && <Link onPress={onOpen}>
-                            <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
-                                <ModalContent>
-                                    {(onClose) => (
-                                        <>
-                                            <ModalHeader className="flex flex-col gap-1">Upload Avatar</ModalHeader>
-                                            <ModalBody>
-                                                <Input type="file" accept="image/*" onChange={async (e) => {
-                                                    const newPfp = e.target.files?.[0]
-                                                    if (!newPfp) return
-                                                    setNewPfp(newPfp);
-                                                }}></Input>
-                                            </ModalBody>
-                                            <ModalFooter>
-                                                <Button color="danger" variant="light" onPress={onClose}>
-                                                Close
+                        <CardHeader>
+                            {me && <Link onPress={onOpen}>
+                                <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
+                                    <ModalContent>
+                                        {(onClose) => (
+                                            <>
+                                                <ModalHeader className="flex flex-col gap-1">Upload Avatar</ModalHeader>
+                                                <ModalBody>
+                                                    <Input type="file" accept="image/*" onChange={async (e) => {
+                                                        const newPfp = e.target.files?.[0]
+                                                        if (!newPfp) return
+                                                        setNewPfp(newPfp);
+                                                    }}></Input>
+                                                </ModalBody>
+                                                <ModalFooter>
+                                                    <Button color="danger" variant="light" onPress={onClose}>
+                                                    Close
+                                                        </Button>
+                                                    <Button isLoading={pfpLoading} color="secondary" onPress={async () => {
+                                                        setPfpLoading(true);
+                                                        const result = await changePfp(username, authToken, newPfp);
+                                                        if (result.status == 200) {
+                                                            setPfp(result.data.pfp);
+                                                        } else {
+                                                            console.log(result.error);
+                                                        }
+                                                        setPfpLoading(false);
+                                                        onClose()
+                                                    }}>
+                                                    Upload
                                                     </Button>
-                                                <Button isLoading={pfpLoading} color="secondary" onPress={async () => {
-                                                    setPfpLoading(true);
-                                                    const result = await changePfp(username, authToken, newPfp);
-                                                    if (result.status == 200) {
-                                                        setPfp(result.data.pfp);
-                                                    } else {
-                                                        console.log(result.error);
-                                                    }
-                                                    setPfpLoading(false);
-                                                    onClose()
-                                                }}>
-                                                Upload
-                                                </Button>
-                                            </ModalFooter>
-                                        </>
-                                    )}
-                                </ModalContent>
-                            </Modal>
-                            <Avatar
-                            showFallback
-                            className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
-                            src={pfp} key={pfp}
-                            />
-                        </Link>}
-                        {!me && <Avatar
-                            showFallback
-                            className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
-                            src={pfp} key={pfp}
-                            />}
-                        <div>
-                            <p className="text-xl font-bold">{username}</p>
-                            <p>1000 albums listened</p>
-                        </div>
-                        <Button color="secondary" className="ml-16"><Add />Follow</Button>
-                    </CardHeader>
+                                                </ModalFooter>
+                                            </>
+                                        )}
+                                    </ModalContent>
+                                </Modal>
+                                <Avatar
+                                showFallback
+                                className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
+                                src={pfp} key={pfp}
+                                />
+                            </Link>}
+                            {!me && <Avatar
+                                showFallback
+                                className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
+                                src={pfp} key={pfp}
+                                />}
+                            <div>
+                                <p className="text-xl font-bold">{username}</p>
+                                <p>1000 albums listened</p>
+                            </div>
+                            <Button color="secondary" className="ml-16"><Add />Follow</Button>
+                        </CardHeader>
 
-                    <CardBody>
-                        <div className="flex justify-between">
-                            {editing ? <Textarea className="mr-2" defaultValue={bio} onChange={(e) => {
-                                setNewBio(e.target.value);
-                            }}></Textarea> : <p className="flex justify-center">{bio}</p>}
-                            {me && <Link onPress={() => {
-                                setEditing(true);
-                            }}><Edit /></Link>}
-                        </div>
-                    </CardBody>
+                        <CardBody>
+                            <div className="flex justify-between">
+                                {editing ? <Textarea className="mr-2" defaultValue={bio} onChange={(e) => {
+                                    setNewBio(e.target.value);
+                                }}></Textarea> : <p className="flex justify-center">{bio}</p>}
+                                {me && <Link onPress={() => {
+                                    setEditing(true);
+                                }}><Edit /></Link>}
+                            </div>
+                        </CardBody>
 
-                    <CardFooter>
-                        {editing && <Button color="secondary" onPress={async () => {
-                            setEditing(false);
-                            const result = await changeBio(username, authToken, newBio);
-                            if (result.status == 200) {
-                                setBio(result.data.bio);
-                            }
-                        }}>Save</Button>}
-                    </CardFooter>
+                        <CardFooter>
+                            {editing && <Button color="secondary" onPress={async () => {
+                                setEditing(false);
+                                const result = await changeBio(username, authToken, newBio);
+                                if (result.status == 200) {
+                                    setBio(result.data.bio);
+                                }
+                            }}>Save</Button>}
+                        </CardFooter>
+                        
+                    </Card>
+                </div>
+
+                <div className="flex flex-col items-center justify-center">
+                    <h2>Mount Rushmore</h2>
                     
-                </Card>
-            </div>
-
-            <div className="flex flex-col items-center justify-center">
-                <h2>Mount Rushmore</h2>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 gap-4 overflow-hidden mb-8 lg:w-[610px] md:w-[310px] w-[160px] lg:h-[150px] md:h-[300px] h-[600px]">
-                    <div className="w-full">
-                        {first == "" ? <Button className="w-full h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
-                            router.push("/mountrushmore?spot=1")
-                        }}>
-                            <p className="text-4xl">+</p>
-                        </Button> :
-                        <div onPointerEnter={() => {setX1(true)}} onPointerLeave={() => {setX1(false)}} className="relative z-0">
-                            <Button className={x1 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
-                                removeMtRush(username, 1);
-                                setFirst("");
+                    <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 gap-4 overflow-hidden mb-8 lg:w-[610px] md:w-[310px] w-[160px] lg:h-[150px] md:h-[300px] h-[600px]">
+                        <div className="w-full">
+                            {first == "" ? <Button className="w-full h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
+                                router.push("/mountrushmore?spot=1")
                             }}>
-                                <Close />
-                            </Button>
-                            <Image isZoomed 
-                            src={first} 
-                            width={150} 
-                            height={150} 
-                            className="w-full h-auto object-cover z-5"
-                            />
-                        </div>}
-                    </div>
-                    <div className="w-full">
-                        {second == "" ? <Button className="w-[95%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
-                            router.push("/mountrushmore?spot=2")
-                        }}><p className="text-4xl">+</p></Button>
-                        : <div onPointerEnter={() => {setX2(true)}} onPointerLeave={() => {setX2(false)}} className="relative z-0">
-                            <Button className={x2 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
-                                removeMtRush(username, 2);
-                                setSecond("");
-                            }}>
-                                <Close />
-                            </Button>
-                            <Image isZoomed 
-                            src={second} 
-                            width={150} 
-                            height={150} 
-                            className="w-full h-auto object-cover z-5"
-                            />
-                        </div>}
-                    </div>
-                    <div className="w-full">
-                        {third == "" ? <Button className="w-full h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
-                            router.push("/mountrushmore?spot=3")
-                        }}><p className="text-4xl">+</p></Button> 
-                        : <div onPointerEnter={() => {setX3(true)}} onPointerLeave={() => {setX3(false)}} className="relative z-0">
-                            <Button className={x3 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
-                                removeMtRush(username, 3);
-                                setThird("");
-                            }}>
-                                <Close />
-                            </Button>
-                            <Image isZoomed 
-                                src={third} 
+                                <p className="text-4xl">+</p>
+                            </Button> :
+                            <div onPointerEnter={() => {setX1(true)}} onPointerLeave={() => {setX1(false)}} className="relative z-0">
+                                <Button className={x1 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
+                                    removeMtRush(username, 1);
+                                    setFirst("");
+                                }}>
+                                    <Close />
+                                </Button>
+                                <Image isZoomed 
+                                src={first}
                                 width={150} 
                                 height={150} 
                                 className="w-full h-auto object-cover z-5"
                                 />
-                        </div>}
+                            </div>}
+                        </div>
+                        <div className="w-full">
+                            {second == "" ? <Button className="w-[95%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
+                                router.push("/mountrushmore?spot=2")
+                            }}><p className="text-4xl">+</p></Button>
+                            : <div onPointerEnter={() => {setX2(true)}} onPointerLeave={() => {setX2(false)}} className="relative z-0">
+                                <Button className={x2 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
+                                    removeMtRush(username, 2);
+                                    setSecond("");
+                                }}>
+                                    <Close />
+                                </Button>
+                                <Image isZoomed 
+                                src={second} 
+                                width={150} 
+                                height={150} 
+                                className="w-full h-auto object-cover z-5"
+                                />
+                            </div>}
+                        </div>
+                        <div className="w-full">
+                            {third == "" ? <Button className="w-full h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
+                                router.push("/mountrushmore?spot=3")
+                            }}><p className="text-4xl">+</p></Button> 
+                            : <div onPointerEnter={() => {setX3(true)}} onPointerLeave={() => {setX3(false)}} className="relative z-0">
+                                <Button className={x3 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
+                                    removeMtRush(username, 3);
+                                    setThird("");
+                                }}>
+                                    <Close />
+                                </Button>
+                                <Image isZoomed 
+                                    src={third} 
+                                    width={150} 
+                                    height={150} 
+                                    className="w-full h-auto object-cover z-5"
+                                    />
+                            </div>}
+                        </div>
+                        <div className="w-full">
+                            {fourth == "" ? <Button className="w-[94%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
+                                router.push("/mountrushmore?spot=4")
+                            }}><p className="text-4xl">+</p></Button> 
+                            : <div onPointerEnter={() => {setX4(true)}} onPointerLeave={() => {setX4(false)}} className="relative z-0">
+                                <Button className={x4 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
+                                    removeMtRush(username, 4);
+                                    setFourth("");
+                                }}>
+                                    <Close />
+                                </Button>
+
+                                <Image isZoomed 
+                                src={fourth}
+                                width={150} 
+                                height={150} 
+                                className="w-full h-auto object-cover z-5">
+                                </Image>
+                            </div>}
+                        </div>
                     </div>
-                    <div className="w-full">
-                        {fourth == "" ? <Button className="w-[94%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
-                            router.push("/mountrushmore?spot=4")
-                        }}><p className="text-4xl">+</p></Button> 
-                        : <div onPointerEnter={() => {setX4(true)}} onPointerLeave={() => {setX4(false)}} className="relative z-0">
-                            <Button className={x4 ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
-                                removeMtRush(username, 4);
-                                setFourth("");
-                            }}>
-                                <Close />
-                            </Button>
 
-                            <Image isZoomed 
-                            src={fourth}
-                            width={150} 
-                            height={150} 
-                            className="w-full h-auto object-cover z-5">
-                            </Image>
-                        </div>}
-                    </div>
-                </div>
+                    <h2>Feed</h2>
 
-                <h2>Feed</h2>
+                    {me && <Button color="secondary" className="mb-2" onPress={() => {
+                        setHidden(!hidden);
+                    }}><Add />New Post</Button>}
+                    
+                    {!hidden && <ListboxWrapper>
+                    <Listbox onAction={(key) => {
+                        setHidden(!hidden);
+                        router.push(`/${key}`)
+                    }}>
+                        <ListboxItem key="new">New post</ListboxItem>
+                        <ListboxItem key="rec">New recommendation</ListboxItem>
+                        <ListboxItem key="track">New album listened</ListboxItem>
+                    </Listbox>
+                    </ListboxWrapper>}
 
-                {me && <Button color="secondary" className="mb-2" onPress={() => {
-                    setHidden(!hidden);
-                }}><Add />New Post</Button>}
-                
-                {!hidden && <ListboxWrapper>
-                <Listbox onAction={(key) => {
-                    setHidden(!hidden);
-                    router.push(`/${key}`)
-                }}>
-                    <ListboxItem key="new">New post</ListboxItem>
-                    <ListboxItem key="rec">New recommendation</ListboxItem>
-                    <ListboxItem key="track">New album listened</ListboxItem>
-                </Listbox>
-                </ListboxWrapper>}
+                    <div className="flex flex-col items-center">
+                        {feed.map((post, index) => {
+                            const isLast = index === feed.length - 1;
 
-                <div>
-                    {loading ? <Spinner size="lg" className="mt-4" color="secondary" /> :
-                    feed.map((post, index) => {
-                        if (feed.length === index + 1) {
                             return (
-                                <Card key={post.id} className="m-4">
-                                    <div className="md:flex p-4">
-                                        <Image src={post.image} width={150} height={150}></Image>
-                                        <div className="ml-4">
-                                            <CardHeader>
-                                                <h3 className="text-lg font-semibold">{post.title}</h3>
-                                            </CardHeader>
-                                            <CardBody>
-                                                {post.body}
-                                            </CardBody>
-                                        </div>
+                            <Card key={post.id} className="m-4 min-w-full" ref={isLast ? lastCardRef : null}>
+                                <div className="md:flex p-4">
+                                    {post.image && <Image src={post.image} width={150} height={150} />}
+                                    <div className="ml-4">
+                                        <CardHeader>
+                                            <h3 className="text-lg font-semibold">{post.title}</h3>
+                                        </CardHeader>
+                                        <CardBody>{post.body}</CardBody>
+                                        <CardFooter><p className="text-gray-400">{dayjs(post.timestamp).fromNow()}</p></CardFooter>
                                     </div>
-                                <div ref={lastCardRef}></div>
-                                </Card>
-                            )
-                        } else {
-                            return (
-                                <Card key={post.id} className="m-4">
-                                    <div className="md:flex p-4">
-                                        <Image isZoomed src={post.image} width={150} height={150}></Image>
-                                        <div className="ml-4">
-                                            <CardHeader>
-                                                <h3 className="text-lg font-semibold">{post.title}</h3>
-                                            </CardHeader>
-                                            <CardBody>
-                                                {post.body}
-                                            </CardBody>
-                                        </div>
-                                    </div>
-                                </Card>
-                            )
-                        }
-                    })}
+                                </div>
+                            </Card>
+                            );
+                        })}
+
+                        {(loading && hasMore) && <Spinner size="lg" className="m-8" color="secondary" />}
+                        </div>
+
                 </div>
             </div>
-        </div>}
+            
+            }
+
+        </main>
 
         <Footer />
-  </>;
+  </div>;
 }

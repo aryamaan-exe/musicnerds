@@ -1,14 +1,33 @@
 import { Navbar } from "../components/navbar";
 import { Footer } from "../components/footer";
-import { Card, CardBody, CardFooter, Textarea, Button } from "@heroui/react";
+import { Input, Card, CardBody, CardFooter, Textarea, Button } from "@heroui/react";
 import { useState } from "react";
+import { useRouter } from "next/router";
+import axios from "axios";
 
-export function CharacterLimit({ content }) {
-    return <p className="text-gray-500 mt-32">{content.length}/140</p>
+export function CharacterLimit({ content, limit }) {
+    return <p className="text-gray-500">{content.length}/{limit}</p>
 }
 
 export default function New() {
+    axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL;
+
     const [postContent, setPostContent] = useState("");
+    const [title, setTitle] = useState("");
+    const username = typeof window !== "undefined" ? localStorage.getItem("username") : "";
+    const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : "";
+    const router = useRouter();
+
+    async function newPost(title, postContent) {
+        try {
+            const timestamp = (new Date()).toISOString();
+            const response = await axios.post("/post", {username, authToken, title, "body": postContent, timestamp});
+            return response;
+        } catch (err) {
+            console.log(err);
+            return false;
+        }
+    }
 
     return <>
         <Navbar />
@@ -17,15 +36,29 @@ export default function New() {
             <div className="w-[75%]">
             <Card>
                 <CardBody>
-                    <Textarea value={postContent} endContent={<CharacterLimit content={postContent} />} minRows={10} className="w-full" onChange={(e) => {
+                    <Input value={title} className="mb-2" placeholder="Title" endContent={
+                        <div>
+                            <CharacterLimit content={title} limit={80} />
+                        </div>
+                    } onChange={(e) => {
+                        if (e.target.value.length <= 80) {
+                            setTitle(e.target.value);
+                        }
+                    }}></Input>
+                    <Textarea value={postContent} endContent={
+                        <div className="mt-32">
+                            <CharacterLimit content={postContent} limit={140} />
+                        </div>
+                    } minRows={10} className="w-full" onChange={(e) => {
                         if (e.target.value.length <= 140) {
                             setPostContent(e.target.value);
                         }
                     }}></Textarea>
                 </CardBody>
                 <CardFooter>
-                    <Button color="secondary" onPress={() => {
-                        console.log(postContent);
+                    <Button color="secondary" onPress={async () => {
+                        await newPost(title, postContent);
+                        router.push(`users/${username}`);
                     }}>Post</Button>
                 </CardFooter>
             </Card>

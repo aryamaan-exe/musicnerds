@@ -29,8 +29,8 @@ export default function MountRushmore() {
     } = useAlbumSearch(process.env.NEXT_PUBLIC_LASTFM_KEY);
 
     const onSearch = (q) => handleSearch(q);
-    const onAdd = async (albumUrl) => {
-        await axios.post("/updateMtRush", { username, authToken, i: spot, album: albumUrl });
+    const onAdd = async (album) => {
+        await axios.post("/updateMtRush", { username, authToken, i: spot, album: album.url });
         router.push(`/users/${username}`);
     };
 

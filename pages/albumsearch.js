@@ -34,10 +34,10 @@ export function useAlbumSearch(apiKey) {
         const albumsXML = parser.parseFromString(response.data, "application/xml").querySelectorAll("album");
         const newAlbums = [];
         albumsXML.forEach(album => {
-        const name = album.querySelector("name")?.textContent;
-        const artist = album.querySelector("artist")?.textContent;
-        const url = album.querySelectorAll("image")[2]?.textContent;
-        newAlbums.push({ name, artist, url });
+            const name = album.querySelector("name")?.textContent;
+            const artist = album.querySelector("artist")?.textContent;
+            const url = album.querySelectorAll("image")[2]?.textContent;
+            newAlbums.push({ name, artist, url });
         });
 
         setResults(prev => [...prev, ...newAlbums]);

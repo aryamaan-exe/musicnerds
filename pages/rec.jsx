@@ -5,10 +5,14 @@ import { SearchBar } from "../components/searchbar";
 import { AlbumResults } from "../components/albumresults";
 import { useAlbumSearch } from "./albumsearch";
 import { useState } from "react";
+import { useRouter } from "next/router";
 import axios from "axios";
 
 export default function Rec() {
-    // const [postContent, setPostContent] = useState("");
+    axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL;
+    const username = typeof window !== "undefined" ? localStorage.getItem("username") : "";
+    const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : "";
+    const router = useRouter();
     const {
         results,
         loading,
@@ -19,12 +23,19 @@ export default function Rec() {
 
     const onSearch = (q) => handleSearch(q);
     const timestamp = (new Date()).toISOString();
-    const onAdd = async (albumUrl) => {
-        await axios.post("/post", { username, authToken, timestamp, image: albumUrl });
+    const onAdd = async (album) => {
+        await axios.post("/post", { 
+            username,
+            authToken,
+            timestamp,
+            "image": album.url,
+            "title": `Listen to ${album.name}`,
+            "body": `${username} recommends ${album.name} by ${album.artist}.`
+        });
         router.push(`/users/${username}`);
     };
 
-    return <>
+    return <div className="min-h-screen flex flex-col">
         <Navbar />
         <div className="flex flex-col h-[85vh] m-8 items-center">
             <h1 className="mb-16">Recommend an album</h1>
@@ -44,5 +55,5 @@ export default function Rec() {
             
         </div>
         <Footer />
-    </>
+    </div>
 }

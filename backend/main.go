@@ -42,6 +42,15 @@ type MtRush struct {
 	Album	  string `json:"album"`
 }
 
+type Post struct {
+	Username  string `json:"username"`
+	AuthToken string `json:"authToken"`
+	Image	  string `json:"image"`
+	Timestamp string `json:"timestamp"`
+	Title 	  string `json:"title"`
+	Body 	  string `json:"body"`
+}
+
 func getAuthToken(password string, username string) string {
 	sum := sha256.Sum256([]byte(password + username + os.Getenv("SALT")))
     return fmt.Sprintf("%x", sum)
@@ -270,28 +279,13 @@ func main() {
 		row := db.QueryRow("SELECT id FROM users WHERE username=$1", username)
 		var id int
 		row.Scan(&id)
-		rows, err := db.Query("SELECT * FROM mtRush")
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer rows.Close()
 		var first string
 		var second string
 		var third string
 		var fourth string
-		for rows.Next() {
-			err = rows.Scan(&id, &first, &second, &third, &fourth)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-		err = rows.Err()
-		if err != nil {
-			log.Fatal(err)
-		}
+
 		row = db.QueryRow("SELECT * FROM mtRush WHERE id=$1", id)
-		row.Scan(&id)
-		row.Scan(&first, &second, &third, &fourth)
+		row.Scan(&id, &first, &second, &third, &fourth)
 
 		c.JSON(200, gin.H{
 			"message": "Obtained Mt. Rushmore",
@@ -360,9 +354,7 @@ func main() {
 			index = "fourth"
 		}
 
-		var x string
-		err = db.QueryRow(fmt.Sprintf("UPDATE mtRush SET %s=$1 WHERE id=$2 RETURNING first", index), update.Album, id).Scan(&x)
-		fmt.Println(id)
+		_, err = db.Exec(fmt.Sprintf("UPDATE mtRush SET %s=$1 WHERE id=$2", index), update.Album, id)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Couldn't update album"})
 			return
@@ -385,9 +377,8 @@ func main() {
 		row := db.QueryRow("SELECT id FROM users WHERE username=$1", username)
 		var id int
 		row.Scan(&id)
-        rows, err := db.Query("SELECT postid, title, body, image, timestamp FROM feed WHERE id=$1 LIMIT 10 OFFSET $2", id, offset)
+        rows, err := db.Query("SELECT postid, title, body, image, timestamp FROM feed WHERE id=$1 ORDER BY timestamp DESC LIMIT 10 OFFSET $2", id, offset)
         if err != nil {
-			fmt.Println(err)
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database"})
             return
         }
@@ -399,7 +390,6 @@ func main() {
             var title, body, image, timestamp string
             err = rows.Scan(&postid, &title, &body, &image, &timestamp)
             if err != nil {
-				fmt.Println("b")
                 c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan row"})
                 return
             }
@@ -417,6 +407,34 @@ func main() {
             "message": fmt.Sprintf("Page %d of %s's feed obtained", page, username),
             "feed":    feed,
         })
+	})
+
+	r.POST("/post", func(c *gin.Context) {
+		var post Post
+		
+		if err := c.BindJSON(&post); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+            return
+		}
+		row := db.QueryRow("SELECT id FROM users WHERE username=$1", post.Username)
+		var id int
+		row.Scan(&id)
+
+		if authenticated(post.Username, post.AuthToken, db) {
+			_, err = db.Exec("INSERT INTO feed (id, title, body, image, timestamp) VALUES ($1, $2, $3, $4, $5)", id, post.Title, post.Body, post.Image, post.Timestamp)
+			if err != nil {
+				_, err = db.Exec("INSERT INTO feed (id, title, body, image, timestamp) VALUES ($1, $2, $3, $4, $5)", id, post.Title, post.Body, post.Timestamp)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database"})
+					return
+				}
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"message": "Post added"})
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		}
+		
 	})
 
 	r.Run(":8000")

@@ -27,7 +27,7 @@ export function AlbumResults({ results, loading, hasMore, onAdd, onLoadMore }) {
               <p className="text-lg mb-4">{album.artist}</p>
               <Button
                 color="secondary"
-                onPress={() => onAdd(album.url)}
+                onPress={() => onAdd(album)}
               >
                 <Add /> Add
               </Button>
