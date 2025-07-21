@@ -96,7 +96,7 @@ func main() {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
-        AllowOrigins:     []string{"http://localhost:3001"},
+        AllowOrigins:     []string{"*"},
         AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
         AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
         ExposeHeaders:    []string{"Content-Length"},
@@ -508,5 +508,5 @@ func main() {
     if port == "" {
         port = "8000" 
     }
-	r.Run(":" + port);
+	r.Run("0.0.0.0:" + port);
 }
