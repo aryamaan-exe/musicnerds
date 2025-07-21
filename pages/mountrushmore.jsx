@@ -30,7 +30,8 @@ export default function MountRushmore() {
 
     const onSearch = (q) => handleSearch(q);
     const onAdd = async (album) => {
-        await axios.post("/updateMtRush", { username, authToken, i: spot, album: album.url });
+        console.log({ username, authToken, i: spot, album: album.url })
+        await axios.post("/updateMtRush", { username, authToken, i: spot, album: album.url },{headers: {"Content-Type": "application/json"}});
         router.push(`/users/${username}`);
     };
 

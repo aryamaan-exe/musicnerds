@@ -18,7 +18,6 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/cloudinary/cloudinary-go/v2"
   	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
-	// "github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -71,7 +70,7 @@ func authenticated(username string, authToken string, db *sql.DB) (bool) {
 	var password string
 	rows.Scan(&password)
 	token := getAuthToken(password, username)
-	fmt.Println(string(token) == authToken)
+	fmt.Println(string(token))
 	return string(token) == authToken
 }
 
@@ -92,6 +91,7 @@ func main() {
         log.Fatal(err)
     }
 	fmt.Println("Successfully connected to the database!")
+	db.Exec("DELETE FROM pg_stat_activity WHERE state = 'idle'")
 
 	r := gin.Default()
 
@@ -104,8 +104,8 @@ func main() {
         MaxAge:           12 * time.Hour,
     }))
 
+	// /register - Takes username, email, and password, and stores the record into users after hashing.
 	r.POST("/register", func(c *gin.Context) {
-
 		var user User
         if err := c.BindJSON(&user); err != nil {
             c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
@@ -144,6 +144,7 @@ func main() {
         })
 	})
 	
+	// /login takes in username and password, queries users and returns auth token on successful login.
 	r.POST("/login", func(c *gin.Context) {
 		var user User
 		
@@ -177,6 +178,7 @@ func main() {
         })
 	})
 
+	// /user takes in the username and returns user info. Also checks if current user is same as queried user through auth token.
 	r.GET("/user", func(c *gin.Context) {
 		username := c.Query("username")
 		authToken := c.Query("authToken")
@@ -209,6 +211,7 @@ func main() {
 		})
 	})
 
+	// /changeBio changes bio after authentication.
 	r.POST("/changeBio", func(c *gin.Context) {
 		var user User
 		if err := c.BindJSON(&user); err != nil {
@@ -228,18 +231,19 @@ func main() {
 		})
 	})
 
+	// /changePfp changes profile pic after authentication using Cloudinary.
 	r.POST("/changePfp", func(c *gin.Context) {
 		var in PfpChange
 		if err := c.BindJSON(&in); err != nil {
 			fmt.Println("a")
-			c.JSON(400, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
 		data, err := base64.StdEncoding.DecodeString(in.Pfp)
 		if err != nil {
 			fmt.Println("b")
-			c.JSON(400, gin.H{"error": "invalid base64"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid base64"})
 			return
 		}
 
@@ -251,7 +255,7 @@ func main() {
 
 		if err != nil {
 			fmt.Println("c")
-			c.JSON(400, gin.H{"error": "Error connecting to image host"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Error connecting to image host"})
 			return
 		}
 
@@ -268,7 +272,7 @@ func main() {
 		)
 		if err != nil {
 			fmt.Println("d")
-			c.JSON(400, gin.H{"error": "Error uploading to image host"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Error uploading to image host"})
 			return
 		}
 
@@ -277,9 +281,10 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update profile picture in database"})
             return
 		}
-		c.JSON(200, gin.H{"message": "Profile picture updated", "pfp": resp.SecureURL})
+		c.JSON(http.StatusOK, gin.H{"message": "Profile picture updated", "pfp": resp.SecureURL})
 	})
 
+	// /mtRush gets the Mt. Rushmore for a user. Could be changed to a single endpoint with /user.
 	r.GET("/mtRush", func(c *gin.Context) {
 		username := c.Query("username")
 		row := db.QueryRow("SELECT id FROM users WHERE username=$1", username)
@@ -293,12 +298,13 @@ func main() {
 		row = db.QueryRow("SELECT * FROM mtRush WHERE id=$1", id)
 		row.Scan(&id, &first, &second, &third, &fourth)
 
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"message": "Obtained Mt. Rushmore",
 			"mtRush": [4]string{ first, second, third, fourth },
 		})
 	})
 
+	// /removeMtRush removes a particular album from Mt. Rushmore at a specific spot (1-4).
 	r.POST("/removeMtRush", func(c *gin.Context) {
 		var remove MtRush
 		if err := c.BindJSON(&remove); err != nil {
@@ -330,7 +336,7 @@ func main() {
 			return
 		}
 
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"message": "Removed album from Mt. Rushmore",
 		})
 	})
@@ -366,11 +372,12 @@ func main() {
 			return
 		}
 
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"message": "Updated Mt. Rushmore",
 		})
 	})
 
+	// /feed returns paginated posts by a user. Currently set to 10 posts.
 	r.GET("/feed", func(c *gin.Context) {
 		username := c.Query("username")
 		page, err := strconv.Atoi(c.Query("page"))
@@ -383,6 +390,7 @@ func main() {
 		row := db.QueryRow("SELECT id FROM users WHERE username=$1", username)
 		var id int
 		row.Scan(&id)
+		// LIMIT 10 -> 10 posts, OFFSET is a multiple of 10
         rows, err := db.Query("SELECT postid, title, body, image, timestamp FROM feed WHERE id=$1 ORDER BY timestamp DESC LIMIT 10 OFFSET $2", id, offset)
         if err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query database"})
@@ -401,6 +409,9 @@ func main() {
                 c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan row"})
                 return
             }
+			countQuery := db.QueryRow("SELECT COUNT(*) FROM likes WHERE postid=$1 GROUP BY postid", postid)
+			var likeCount int
+			countQuery.Scan(&likeCount)
 
             feed = append(feed, map[string]interface{}{
                 "postid": 	 postid,
@@ -408,6 +419,7 @@ func main() {
                 "body":  	 body,
                 "image":  	 image,
 				"timestamp": timestamp.Format(time.RFC3339),
+				"likes":	 likeCount,
             })
         }
 
@@ -459,7 +471,7 @@ func main() {
 			likes = append(likes, postID)
 		}
 
-		c.JSON(200, gin.H{"likes": likes})
+		c.JSON(http.StatusOK, gin.H{"likes": likes})
 
 	})
 
