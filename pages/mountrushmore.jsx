@@ -3,7 +3,7 @@ import { Footer } from "../components/footer";
 import { useRouter } from "next/router";
 import { SearchBar } from "../components/searchbar";
 import { AlbumResults } from "../components/albumresults";
-import { useAlbumSearch } from "./albumsearch";
+import { useAlbumSearch } from "../hooks/albumsearch";
 import axios from "axios";
 
 export function SearchIcon() {

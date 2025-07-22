@@ -3,7 +3,7 @@ import { Footer } from "../components/footer";
 import { Card, CardBody, CardFooter, Input, Button } from "@heroui/react";
 import { SearchBar } from "../components/searchbar";
 import { AlbumResults } from "../components/albumresults";
-import { useAlbumSearch } from "./albumsearch";
+import { useAlbumSearch } from "../hooks/albumsearch";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
