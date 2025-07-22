@@ -103,6 +103,11 @@ func main() {
         MaxAge:           12 * time.Hour,
     }))
 
+	// /health - Health check for cron job (remove if upgrading Render)
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "Status OK"})
+	})
+
 	// /register - Takes username, email, and password, and stores the record into users after hashing.
 	r.POST("/register", func(c *gin.Context) {
 		var user User
