@@ -30,6 +30,7 @@ export function useAlbumSearch(apiKey) {
         const response = await axios.get(`/api/search-albums`, {
             params: { query: queryRef.current, page }
         });
+        const parser = new DOMParser();
         const albumsXML = parser.parseFromString(response.data, "application/xml").querySelectorAll("album");
         const newAlbums = [];
         albumsXML.forEach(album => {

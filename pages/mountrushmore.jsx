@@ -13,8 +13,6 @@ export function SearchIcon() {
 }
 
 export default function MountRushmore() {
-    axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL;
-
     const router = useRouter();
     const username = typeof window !== "undefined" ? localStorage.getItem("username") : "";
     const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : "";
@@ -26,12 +24,12 @@ export default function MountRushmore() {
         hasMore,
         handleSearch,
         loadMore
-    } = useAlbumSearch(process.env.NEXT_PUBLIC_LASTFM_KEY);
+    } = useAlbumSearch();
 
     const onSearch = (q) => handleSearch(q);
     const onAdd = async (album) => {
         console.log({ username, authToken, i: spot, album: album.url })
-        await axios.post("/updateMtRush", { username, authToken, i: spot, album: album.url },{headers: {"Content-Type": "application/json"}});
+        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/updateMtRush`, { username, authToken, i: spot, album: album.url },{headers: {"Content-Type": "application/json"}});
         router.push(`/users/${username}`);
     };
 
