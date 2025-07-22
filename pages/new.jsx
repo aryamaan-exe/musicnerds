@@ -20,7 +20,7 @@ export default function New() {
 
     async function newPost(title, postContent) {
         try {
-            const response = await axios.post("/post", {username, authToken, title, "body": postContent});
+            const response = await axios.post("/post", {username, authToken, title, "body": postContent, "image": ""});
             return response;
         } catch (err) {
             console.log(err);
@@ -56,8 +56,10 @@ export default function New() {
                 </CardBody>
                 <CardFooter>
                     <Button color="secondary" onPress={async () => {
-                        await newPost(title, postContent);
-                        router.push(`users/${username}`);
+                        const response = await newPost(title, postContent);
+                        if (response) {
+                            router.push(`users/${username}?newPost=true`);
+                        }
                     }}>Post</Button>
                 </CardFooter>
             </Card>

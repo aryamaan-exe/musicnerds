@@ -7,7 +7,7 @@ import { useRouter } from "next/router";
 import axios from "axios";
 
 export default function Auth() {
-    axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL;
+    axios.defaults.baseURL = "/api";
 
     async function authHandler(authMode, username, password, email) {
         if (authMode == "register") {

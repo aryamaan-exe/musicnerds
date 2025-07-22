@@ -7,7 +7,6 @@ import axios from "axios";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import imageCompression from "browser-image-compression";
-import { div } from "framer-motion/client";
 
 export function Add() {
     return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="md:size-6">
@@ -115,7 +114,7 @@ export default function Profile() {
         }
     }
 
-    axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL;
+    axios.defaults.baseURL = "/api";
     axios.defaults.timeout = 10000;
     dayjs.extend(relativeTime);
 
@@ -156,11 +155,17 @@ export default function Profile() {
     async function getFeed(username, page) {
         try {
             const response = await axios.get("/feed", {
+                headers: {
+                    'Cache-Control': 'no-cache'
+                },
+
                 params: {
                     username: username,
-                    page: page
+                    page: page,
+                    _t: Date.now() // Cache-busting parameter
                 }
             });
+
 
             return response.data;
         } catch (err) {
@@ -176,14 +181,16 @@ export default function Profile() {
         if (loading || !hasMore) return;
 
         setLoading(true);
-        const newItems = (await getFeed(username, page)).feed;
+        const newItems = (await getFeed(username, page)).posts;
         if (!newItems || newItems.length === 0) {
+
             setHasMore(false);
             return;
         }
 
         try {
             const updatedFeed = [...feed, ...newItems];
+
             setFeed(updatedFeed);
             setLikeCounts(updatedFeed.map((post) => {return post.likes}));
         } catch (err) {
@@ -196,13 +203,13 @@ export default function Profile() {
 
     async function changeBio(username, authToken, bio) {
         try {
-            const response = axios.post("/changeBio", {
+            const response = await axios.post("/changeBio", {
                 username: username,
                 authToken: authToken,
                 bio: bio
             });
 
-            return response;
+            return { success: true, status: response.status, data: response.data };
         } catch (err) {
             if (err.response) {
                 return { success: false, status: err.response.status, error: err.response.data.error };
@@ -281,9 +288,11 @@ export default function Profile() {
     useEffect(() => {
         async function x() {
             if (!router.query.username) return;
-            if (window.localStorage.getItem("authToken") == "") return;
-            setAuthToken(window.localStorage.getItem("authToken"));
-            const req = await checkUser(window.localStorage.getItem("username"), router.query.username, window.localStorage.getItem("authToken"));
+            const storedAuthToken = window.localStorage.getItem("authToken");
+            console.log("Stored Auth Token:", storedAuthToken);
+            if (!storedAuthToken) return; // If authToken is empty or null, return early
+            setAuthToken(storedAuthToken);
+            const req = await checkUser(window.localStorage.getItem("username"), router.query.username, storedAuthToken);
             if (!req) {
                 set404(true);
             } else {
@@ -299,6 +308,17 @@ export default function Profile() {
         x();
     }, [router.query.username]);
 
+    useEffect(() => {
+        if (router.query.newPost === 'true') {
+
+            setFeed([]);
+            setPage(1);
+            setHasMore(true);
+            loadFeed(username, 1);
+            router.replace(`/users/${username}`, undefined, { shallow: true });
+        }
+    }, [router.query.newPost, username]);
+
     return <div className="min-h-screen flex flex-col">
         <Navbar />
 
@@ -311,8 +331,7 @@ export default function Profile() {
                         <p>Oops! We couldn't find a user with that username.</p>
                     </div>
                 </div>
-            : <div>
-
+            : <>
                 <div className="flex justify-center items-center my-8 mx-4">
                     <Card className="w-[55vh]">
                         <CardHeader className="flex justify-between">
@@ -390,18 +409,25 @@ export default function Profile() {
                                 }}></Textarea> : <p className="flex justify-center">{bio}</p>}
                                 {me && <Link onPress={() => {
                                     setEditing(true);
+                                    setNewBio(bio);
                                 }}><Edit /></Link>}
                             </div>
                         </CardBody>
 
                         <CardFooter>
                             {editing && <Button color="secondary" onPress={async () => {
-                                setEditing(false);
+                                if (newBio.trim() === "") {
+                                    setNewBio(bio);
+                                    setEditing(false);
+                                    return;
+                                }
                                 const result = await changeBio(username, authToken, newBio);
                                 if (result.status == 200) {
-                                    setBio(result.data.bio);
-                                }
-                            }}>Save</Button>}
+                                    setBio(newBio);
+                                } else {
+                                    console.log(result.error);
+                                    setNewBio(bio); // Revert to original bio on error
+                                }}}>Save</Button>}
                         </CardFooter>
                         
                     </Card>
@@ -478,8 +504,7 @@ export default function Profile() {
                         </div>
 
                 </div>
-            </div>
-            
+            </>
             }
 
         </main>
