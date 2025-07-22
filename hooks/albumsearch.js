@@ -27,10 +27,9 @@ export function useAlbumSearch(apiKey) {
     if (loading || !hasMore) return;
     setLoading(true);
     try {
-        const response = await axios.get(
-            `https://ws.audioscrobbler.com/2.0/?method=album.search&album=${encodeURIComponent(queryRef.current)}&api_key=${apiKey}&limit=10&page=${page}&format=xml`
-        );
-        const parser = new DOMParser();
+        const response = await axios.get(`/api/search-albums`, {
+            params: { query: queryRef.current, page }
+        });
         const albumsXML = parser.parseFromString(response.data, "application/xml").querySelectorAll("album");
         const newAlbums = [];
         albumsXML.forEach(album => {
