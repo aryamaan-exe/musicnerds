@@ -7,6 +7,7 @@ import axios from "axios";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import imageCompression from "browser-image-compression";
+import { div } from "framer-motion/client";
 
 export function Add() {
     return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="md:size-6">
@@ -315,8 +316,10 @@ export default function Profile() {
                 <div className="flex justify-center items-center my-8 mx-4">
                     <Card className="w-[55vh]">
                         <CardHeader className="flex justify-between">
-                                <div>
-                                    {me && <Link onPress={onOpen}>
+                                <div className="flex flex-row">
+                                    {me && 
+                                    <div className="flex flex-row">
+                                    <Link onPress={onOpen}>
                                         <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
                                             <ModalContent>
                                                 {(onClose) => (
@@ -356,13 +359,17 @@ export default function Profile() {
                                         className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
                                         src={pfp} key={pfp}
                                         />
-                                    </Link>}
+                                    </Link>
+                                    </div>
+                                    }
                                     <div className="flex flex-row">
-                                        {!me && <Avatar
-                                        showFallback
-                                        className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
-                                        src={pfp} key={pfp}
-                                        />}
+                                        <div>
+                                            {!me && <Avatar
+                                            showFallback
+                                            className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
+                                            src={pfp} key={pfp}
+                                            />}
+                                        </div>
                                         <div>
                                             <p className="text-xl font-bold">{username}</p>
                                             <p>{profileStat.count} {profileStat.name}</p>
