@@ -75,10 +75,9 @@ func authenticated(username string, authToken string, db *sql.DB) (bool) {
 }
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal(err)
-    }
+	if os.Getenv("PORT") == "" {
+		_ = godotenv.Load()
+	}
 	url := os.Getenv("URL")
 	db, err := sql.Open("postgres", url)
     if err != nil {
