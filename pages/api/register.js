@@ -13,7 +13,7 @@ export default async function handler(req, res) {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const result = await pool.query(
-        "INSERT INTO users (username, password, email, bio, pfp) VALUES ($1, $2, $3, '', 'https://images.unsplash.com/broken') RETURNING id",
+        "INSERT INTO users (username, password, email, bio, pfp) VALUES ($1, $2, $3, '', 'https://res.cloudinary.com/dxpihu5ac/image/upload/v1708642351/default_pfp.png') RETURNING id",
         [username, hashedPassword, email]
       );
 

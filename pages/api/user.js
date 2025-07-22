@@ -1,24 +1,18 @@
 import { Pool } from "pg";
-import crypto from "crypto";
 
 const pool = new Pool({
-  connectionString: process.env.URL,
+  connectionString: process.env.DATABASE_URL,
 });
-
-function getAuthToken(password, username) {
-  const salt = process.env.SALT || "";
-  const hash = crypto.createHash("sha256");
-  hash.update(password + username + salt);
-  return hash.digest("hex");
-}
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
     const { username, authToken } = req.query;
 
+    const jwt = require("jsonwebtoken");
+
     try {
       const userResult = await pool.query(
-        "SELECT bio, pfp, password FROM users WHERE username=$1",
+        "SELECT bio, pfp FROM users WHERE username=$1",
         [username]
       );
 
@@ -27,13 +21,18 @@ export default async function handler(req, res) {
         return;
       }
 
-      const { bio, pfp, password } = userResult.rows[0];
+      const { bio, pfp } = userResult.rows[0];
 
       let isMe = false;
       if (authToken) {
-        const expectedAuthToken = getAuthToken(password, username);
-        if (expectedAuthToken === authToken) {
-          isMe = true;
+        try {
+
+          const decoded = jwt.verify(authToken, process.env.JWT_SECRET);
+          if (decoded.username === username) {
+            isMe = true;
+          }
+        } catch (err) {
+          console.error("Token verification error:", err);
         }
       }
 

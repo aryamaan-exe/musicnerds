@@ -1,18 +1,26 @@
 import { Pool } from "pg";
 
+import { authenticated } from "./utils/auth";
+
 const pool = new Pool({
-  connectionString: process.env.URL,
+  connectionString: process.env.DATABASE_URL,
 });
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
-    const { username, bio } = req.body;
+    const { username, authToken, bio } = req.body;
 
     if (!bio || bio.trim() === '') {
       return res.status(400).json({ error: "Bio cannot be empty" });
     }
 
     try {
+      const auth = await authenticated(username, authToken, pool);
+      if (!auth) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+
       await pool.query(
         "UPDATE users SET bio=$1 WHERE username=$2",
         [bio, username]

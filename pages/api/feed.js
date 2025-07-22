@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 
 const pool = new Pool({
-  connectionString: process.env.URL,
+  connectionString: process.env.DATABASE_URL,
 });
 
 export default async function handler(req, res) {
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       const offset = (pageNum - 1) * 10;
 
       const feedResult = await pool.query(
-        "SELECT postid, title, body, image, timestamp FROM feed WHERE id=$1 ORDER BY timestamp DESC LIMIT 10 OFFSET $2",
+        "SELECT f.postid, f.title, f.body, f.image, f.timestamp, COUNT(l.postid) AS likes FROM feed f LEFT JOIN likes l ON f.postid = l.postid WHERE f.id=$1 GROUP BY f.postid, f.title, f.body, f.image, f.timestamp ORDER BY f.timestamp DESC LIMIT 10 OFFSET $2",
         [userId, offset]
       );
 

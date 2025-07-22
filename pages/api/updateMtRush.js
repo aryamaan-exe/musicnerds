@@ -1,33 +1,20 @@
 import { Pool } from "pg";
-import crypto from "crypto";
+import { getAuthToken, authenticated } from "./utils/auth";
 
 const pool = new Pool({
-  connectionString: process.env.URL,
+  connectionString: process.env.DATABASE_URL,
 });
 
-function getAuthToken(password, username) {
-  const salt = process.env.SALT || "";
-  const hash = crypto.createHash("sha256");
-  hash.update(password + username + salt);
-  return hash.digest("hex");
-}
 
-async function authenticated(username, authToken, db) {
-  const rows = await db.query("SELECT password FROM users WHERE username=$1", [username]);
-  if (rows.rows.length === 0) {
-    return false;
-  }
-  const password = rows.rows[0].password;
-  const token = getAuthToken(password, username);
-  return token === authToken;
-}
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
     const { username, authToken, i, album } = req.body;
 
+
     try {
       const auth = await authenticated(username, authToken, pool);
+
       if (!auth) {
         res.status(401).json({ error: "Unauthorized request" });
         return;

@@ -1,6 +1,6 @@
 import { Pool } from "pg";
-import crypto from "crypto";
 import { v2 as cloudinary } from "cloudinary";
+import { getAuthToken, authenticated } from "./utils/auth";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -9,29 +9,13 @@ cloudinary.config({
 });
 
 const pool = new Pool({
-  connectionString: process.env.URL,
+  connectionString: process.env.DATABASE_URL,
 });
-
-function getAuthToken(password, username) {
-  const salt = process.env.SALT || "";
-  const hash = crypto.createHash("sha256");
-  hash.update(password + username + salt);
-  return hash.digest("hex");
-}
-
-async function authenticated(username, authToken, db) {
-  const rows = await db.query("SELECT password FROM users WHERE username=$1", [username]);
-  if (rows.rows.length === 0) {
-    return false;
-  }
-  const password = rows.rows[0].password;
-  const token = getAuthToken(password, username);
-  return token === authToken;
-}
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
-    const { username, authToken, pfp } = req.body;
+    let { username, pfp } = req.body;
+    const authToken = req.headers.authorization?.split(' ')[1];
 
     try {
       const auth = await authenticated(username, authToken, pool);
@@ -40,7 +24,13 @@ export default async function handler(req, res) {
         return;
       }
 
-      const uploadResult = await cloudinary.uploader.upload(pfp, {
+
+      try {
+            if (pfp && typeof pfp === 'string' && !pfp.startsWith("data:image")) {
+                pfp = `data:image/png;base64,${pfp}`;
+            }
+
+            const uploadResult = await cloudinary.uploader.upload(pfp, {
         folder: "profile_pictures",
       });
 
@@ -49,9 +39,14 @@ export default async function handler(req, res) {
         [uploadResult.secure_url, username]
       );
 
-      res.status(200).json({ message: "Profile picture updated successfully" });
+
+      res.status(200).json({ message: "Profile picture updated successfully", pfp: uploadResult.secure_url });
+      } catch (cloudinaryError) {
+        console.error("Cloudinary Error:", cloudinaryError.message || cloudinaryError.data || cloudinaryError.response || 'Failed to upload image');
+        res.status(500).json({ error: "Failed to upload image to Cloudinary" });
+        return;
+      }
     } catch (error) {
-      console.error("PFP update error:", error);
       res.status(500).json({ error: "Failed to update profile picture" });
     }
   } else {

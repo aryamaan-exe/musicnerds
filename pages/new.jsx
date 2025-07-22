@@ -10,8 +10,6 @@ export function CharacterLimit({ content, limit }) {
 }
 
 export default function New() {
-    axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL;
-
     const [postContent, setPostContent] = useState("");
     const [title, setTitle] = useState("");
     const username = typeof window !== "undefined" ? localStorage.getItem("username") : "";
@@ -20,7 +18,7 @@ export default function New() {
 
     async function newPost(title, postContent) {
         try {
-            const response = await axios.post("/post", {username, authToken, title, "body": postContent, "image": ""});
+            const response = await axios.post("/api/post", {username, authToken, title, "body": postContent, "image": ""});
             return response;
         } catch (err) {
             console.log(err);

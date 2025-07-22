@@ -18,7 +18,6 @@ export function Edit() {
     return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="gray" className="size-6">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
             </svg>
-
 }
 
 export function Close() {
@@ -51,10 +50,10 @@ export const ListboxWrapper = ({children}) => (
     </div>
 );
 
-export function MtRush({ spot, albumCovers, setAlbumCovers, router, authToken }) {
+export function MtRush({ spot, albumCovers, setAlbumCovers, router, authToken, me }) {
     async function removeMtRush(username, authToken, i) {
         try {
-            const response = axios.post("/removeMtRush", {
+            const response = axios.post("/api/removeMtRush", {
                 username: username,
                 authToken: authToken,
                 i: i
@@ -72,27 +71,29 @@ export function MtRush({ spot, albumCovers, setAlbumCovers, router, authToken })
 
     const [closeButtonVisible, setCloseButtonVisible] = useState(false);
     return <div className="w-full">
-        {albumCovers[spot - 1] == "" ? <Button className="w-[94%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
+        {albumCovers[spot - 1] == "" ? (<Button disabled={!me} className="w-[94%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
             router.push(`/mountrushmore?spot=${spot}`)
         }}>
-            <p className="text-4xl">+</p>
-        </Button> :
+            <p className="text-4xl">{me ? "+" : ""}</p>
+        </Button>) : (
         <div onPointerEnter={() => {setCloseButtonVisible(true)}} onPointerLeave={() => {setCloseButtonVisible(false)}} className="relative z-0">
-            <Button className={closeButtonVisible ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
-                removeMtRush(router.query.username, authToken, spot);
-                let albumCoversCopy = albumCovers.copyWithin();
-                albumCovers.splice(spot-1,1,"");
-                setAlbumCovers(albumCoversCopy);
-            }}>
-                <Close />
-            </Button>
-            <Image isZoomed 
-            src={albumCovers[spot - 1]}
-            width={150} 
-            height={150} 
-            className="w-full h-auto object-cover z-5"
-            />
-        </div>}
+            <>
+                {me && <Button className={closeButtonVisible ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
+                    removeMtRush(router.query.username, authToken, spot);
+                    let albumCoversCopy = albumCovers.copyWithin();
+                    albumCovers.splice(spot-1,1,"");
+                    setAlbumCovers(albumCoversCopy);
+                }}>
+                    <Close />
+                </Button>}
+                <Image isZoomed 
+                src={albumCovers[spot - 1]}
+                width={150} 
+                height={150} 
+                className="w-full h-auto object-cover z-5"
+                />
+            </>
+        </div>)}
     </div>
 }
 
@@ -100,10 +101,10 @@ export default function Profile() {
     // checkUser: currentUsername - authenticated user, pageUsername - user on the current slug page, authToken - current user's auth token, returns bio, pfp, likes
     async function checkUser(currentUsername, pageUsername, authToken) {
         try {
-            const response = await axios.get("/user", {
+            const response = await axios.get("/api/user", {
                 params: { username: pageUsername, authToken }
             });
-            const likesResponse = await axios.get("/likes", {
+            const likesResponse = await axios.get("/api/likes", {
                 params: { username: currentUsername }
             });
 
@@ -114,7 +115,6 @@ export default function Profile() {
         }
     }
 
-    axios.defaults.baseURL = "/api";
     axios.defaults.timeout = 10000;
     dayjs.extend(relativeTime);
 
@@ -127,7 +127,7 @@ export default function Profile() {
     const [page, setPage] = useState(1);
     const [notFound, set404] = useState(false);
     const [bio, setBio] = useState("");
-    const [pfp, setPfp] = useState("https://images.unsplash.com/broken");
+    const [pfp, setPfp] = useState("");
     const [me, setMe] = useState(false);
     const [liked, setLiked] = useState([]);
     const [editing, setEditing] = useState(false);
@@ -135,6 +135,8 @@ export default function Profile() {
     const [newBio, setNewBio] = useState("");
     const [newPfp, setNewPfp] = useState(null);
     const [albumCovers, setAlbumCovers] = useState([]);
+
+
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
     const [hidden, setHidden] = useState(true);
     const [likeCounts, setLikeCounts] = useState([]);
@@ -154,7 +156,7 @@ export default function Profile() {
 
     async function getFeed(username, page) {
         try {
-            const response = await axios.get("/feed", {
+            const response = await axios.get("/api/feed", {
                 headers: {
                     'Cache-Control': 'no-cache'
                 },
@@ -162,7 +164,7 @@ export default function Profile() {
                 params: {
                     username: username,
                     page: page,
-                    _t: Date.now() // Cache-busting parameter
+                    _t: Date.now()
                 }
             });
 
@@ -192,7 +194,10 @@ export default function Profile() {
             const updatedFeed = [...feed, ...newItems];
 
             setFeed(updatedFeed);
-            setLikeCounts(updatedFeed.map((post) => {return post.likes}));
+            const newLikeCounts = updatedFeed.map((post) => {
+                return parseInt(post.likes, 10);
+            });
+            setLikeCounts(newLikeCounts);
         } catch (err) {
             console.log(err);
         }
@@ -203,7 +208,7 @@ export default function Profile() {
 
     async function changeBio(username, authToken, bio) {
         try {
-            const response = await axios.post("/changeBio", {
+            const response = await axios.post("/api/changeBio", {
                 username: username,
                 authToken: authToken,
                 bio: bio
@@ -230,10 +235,13 @@ export default function Profile() {
             const reader = new FileReader()
             const resizedPfpB64 = await new Promise(r=>{reader.onload=()=>r(reader.result.split(",")[1]);reader.readAsDataURL(resizedPfp)})
 
-            const response = axios.post("/changePfp", {
+            const response = axios.post("/api/pfp", {
                 username: username,
-                authToken: authToken,
                 pfp: resizedPfpB64
+            }, {
+                headers: {
+                    Authorization: `Bearer ${authToken}`
+                }
             });
 
             return response;
@@ -248,7 +256,7 @@ export default function Profile() {
 
     async function getMtRush(username) {
         try {
-            const response = axios.get("/mtRush", {
+            const response = axios.get("/api/mtRush", {
                 params: {
                     username: username,
                 }
@@ -266,7 +274,7 @@ export default function Profile() {
 
     async function likePost(currentUsername, postID, remove) {
         try {
-            const response = await axios.post("/like", {
+            const response = await axios.post("/api/like", {
                 username: currentUsername, authToken, postID, remove
             });
 
@@ -282,15 +290,13 @@ export default function Profile() {
     }
 
     async function followUser(currentUsername, pageUsername) {
-        console.log(currentUsername, "is now following", pageUsername);
     }
 
     useEffect(() => {
         async function x() {
             if (!router.query.username) return;
             const storedAuthToken = window.localStorage.getItem("authToken");
-            console.log("Stored Auth Token:", storedAuthToken);
-            if (!storedAuthToken) return; // If authToken is empty or null, return early
+            if (!storedAuthToken) return;
             setAuthToken(storedAuthToken);
             const req = await checkUser(window.localStorage.getItem("username"), router.query.username, storedAuthToken);
             if (!req) {
@@ -376,7 +382,7 @@ export default function Profile() {
                                         <Avatar
                                         showFallback
                                         className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
-                                        src={pfp} key={pfp}
+                                        src={`${pfp}?${Date.now()}`}
                                         />
                                     </Link>
                                     </div>
@@ -386,7 +392,7 @@ export default function Profile() {
                                             {!me && <Avatar
                                             showFallback
                                             className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
-                                            src={pfp} key={pfp}
+                                            src={`${pfp}?${Date.now()}`}
                                             />}
                                         </div>
                                         <div>
@@ -424,7 +430,8 @@ export default function Profile() {
                                 const result = await changeBio(username, authToken, newBio);
                                 if (result.status == 200) {
                                     setBio(newBio);
-                                } else {
+                                    setEditing(false);
+                                 } else {
                                     console.log(result.error);
                                     setNewBio(bio); // Revert to original bio on error
                                 }}}>Save</Button>}
@@ -438,7 +445,7 @@ export default function Profile() {
                     
                     <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 gap-4 overflow-hidden mb-8 lg:w-[610px] md:w-[310px] w-[160px] lg:h-[150px] md:h-[300px] h-[600px]">
                         {Array(4).fill(1).map((_, i) => {
-                            return <MtRush spot={i + 1} albumCovers={albumCovers} setAlbumCovers={setAlbumCovers} router={router} authToken={authToken}></MtRush>
+                            return <MtRush spot={i + 1} albumCovers={albumCovers} setAlbumCovers={setAlbumCovers} router={router} authToken={authToken} me={me}></MtRush>
                         })}
                     </div>
 

@@ -1,17 +1,12 @@
-import bcrypt from "bcrypt";
 import { Pool } from "pg";
-import crypto from "crypto";
+import { getAuthToken } from "./utils/auth";
+import bcrypt from "bcrypt";
 
 const pool = new Pool({
-  connectionString: process.env.URL,
+  connectionString: process.env.DATABASE_URL,
 });
 
-function getAuthToken(password, username) {
-  const salt = process.env.SALT || "";
-  const hash = crypto.createHash("sha256");
-  hash.update(password + username + salt);
-  return hash.digest("hex");
-}
+
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
@@ -36,7 +31,7 @@ export default async function handler(req, res) {
         return;
       }
 
-      const authToken = getAuthToken(hashedPassword, username);
+      const authToken = getAuthToken(username);
 
       res.status(200).json({
         message: "User logged in successfully",

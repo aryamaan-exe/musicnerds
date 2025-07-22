@@ -27,7 +27,7 @@ export function useAlbumSearch(apiKey) {
     if (loading || !hasMore) return;
     setLoading(true);
     try {
-        const response = await axios.get(`/search-albums`, {
+        const response = await axios.get(`/api/search-albums`, {
             params: { query: queryRef.current, page }
         });
         const parser = new DOMParser();

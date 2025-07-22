@@ -8,7 +8,6 @@ import { useRouter } from "next/router";
 import axios from "axios";
 
 export default function Rec() {
-    axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL;
     const username = typeof window !== "undefined" ? localStorage.getItem("username") : "";
     const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : "";
     const router = useRouter();
@@ -23,7 +22,7 @@ export default function Rec() {
     const onSearch = (q) => handleSearch(q);
     const timestamp = (new Date()).toISOString();
     const onAdd = async (album) => {
-        await axios.post("/post", { 
+        await axios.post("/api/post", { 
             username,
             authToken,
             timestamp,

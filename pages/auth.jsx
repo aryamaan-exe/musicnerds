@@ -7,12 +7,10 @@ import { useRouter } from "next/router";
 import axios from "axios";
 
 export default function Auth() {
-    axios.defaults.baseURL = "/api";
-
     async function authHandler(authMode, username, password, email) {
         if (authMode == "register") {
             try {
-                const response = await axios.post("/register", {
+                const response = await axios.post("/api/register", {
                     username: username,
                     email: email,
                     password: password
@@ -28,7 +26,7 @@ export default function Auth() {
             }
         } else {
             try {
-                const response = await axios.post("/login", {
+                const response = await axios.post("/api/login", {
                     username: username,
                     password: password
                 });
@@ -94,7 +92,7 @@ export default function Auth() {
                             
                             if (result.status == 200) {
                                 window.localStorage.setItem("username", username);
-                                const authToken = result.data.authToken
+                                const authToken = result.data.authToken;
                                 window.localStorage.setItem("authToken", authToken);
                                 router.push(`/users/${username}`)
                             } else {
