@@ -1,9 +1,5 @@
-import { Pool } from "pg";
-import { getAuthToken, authenticated } from "./utils/auth";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { authenticated } from "./utils/auth";
+import { pool } from "./utils/db";
 
 
 

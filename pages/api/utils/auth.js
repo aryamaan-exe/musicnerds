@@ -1,16 +1,11 @@
-import { Pool } from "pg";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import jwt from "jsonwebtoken";
+import { pool } from "./db";
 
 export function getAuthToken(username) {
-  const jwt = require("jsonwebtoken");
   return jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: "24h" });
 }
 
 export async function authenticated(username, authToken, db) {
-  const jwt = require("jsonwebtoken");
   try {
     const decoded = jwt.verify(authToken, process.env.JWT_SECRET);
     if (decoded.username === username) {

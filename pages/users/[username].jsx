@@ -71,11 +71,11 @@ export function MtRush({ spot, albumCovers, setAlbumCovers, router, authToken, m
 
     const [closeButtonVisible, setCloseButtonVisible] = useState(false);
     return <div className="w-full">
-        {albumCovers[spot - 1] == "" ? (me ? (<Button disabled={!me} className="w-[94%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
+        {albumCovers[spot - 1] == "" ? (<Button disabled={!me} className="w-[94%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
             router.push(`/mountrushmore?spot=${spot}`)
         }}>
-            <p className="text-4xl">+</p>
-        </Button>) : (<div className="w-[94%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}}></div>)) : (
+            <p className="text-4xl">{me ? "+" : ""}</p>
+        </Button>) : (
         <div onPointerEnter={() => {setCloseButtonVisible(true)}} onPointerLeave={() => {setCloseButtonVisible(false)}} className="relative z-0">
             <>
                 {me && <Button className={closeButtonVisible ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {

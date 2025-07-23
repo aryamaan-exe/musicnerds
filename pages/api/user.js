@@ -1,14 +1,9 @@
-import { Pool } from "pg";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import jwt from "jsonwebtoken";
+import { pool } from "./utils/db";
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
     const { username, authToken } = req.query;
-
-    const jwt = require("jsonwebtoken");
 
     try {
       const userResult = await pool.query(

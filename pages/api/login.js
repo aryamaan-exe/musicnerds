@@ -1,10 +1,6 @@
-import { Pool } from "pg";
 import { getAuthToken } from "./utils/auth";
+import { pool } from "./utils/db";
 import bcrypt from "bcrypt";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 
 

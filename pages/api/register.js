@@ -1,9 +1,6 @@
 import bcrypt from "bcrypt";
-import { Pool } from "pg";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { getAuthToken } from "./utils/auth";
+import { pool } from "./utils/db";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
@@ -24,7 +21,12 @@ export default async function handler(req, res) {
         [userId]
       );
 
-      res.status(200).json({ message: "User registered successfully" });
+      const authToken = getAuthToken(username);
+
+      res.status(200).json({
+        message: "User registered successfully",
+        authToken: authToken
+      });
     } catch (error) {
       if (error.code === "23505") {
         res.status(500).json({ error: "Username is taken, choose another" });

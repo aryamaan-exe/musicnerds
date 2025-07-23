@@ -1,10 +1,5 @@
-import { Pool } from "pg";
-
 import { authenticated } from "./utils/auth";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { pool } from "./utils/db";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {

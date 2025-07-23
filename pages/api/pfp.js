@@ -1,15 +1,11 @@
-import { Pool } from "pg";
 import { v2 as cloudinary } from "cloudinary";
 import { getAuthToken, authenticated } from "./utils/auth";
+import { pool } from "./utils/db";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
 });
 
 export default async function handler(req, res) {
