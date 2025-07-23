@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 
       const { bio, pfp } = userResult.rows[0];
 
-      let isMe = false;
+      let isMe;
       if (authToken) {
         try {
 
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
             isMe = true;
           }
         } catch (err) {
-          console.error("Token verification error:", err);
+          isMe = false;
         }
       }
 

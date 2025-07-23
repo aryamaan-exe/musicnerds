@@ -98,17 +98,25 @@ export function MtRush({ spot, albumCovers, setAlbumCovers, router, authToken, m
 }
 
 export default function Profile() {
-    // checkUser: currentUsername - authenticated user, pageUsername - user on the current slug page, authToken - current user's auth token, returns bio, pfp, likes
-    async function checkUser(currentUsername, pageUsername, authToken) {
+    async function checkUser(username, authToken) {
         try {
             const response = await axios.get("/api/user", {
-                params: { username: pageUsername, authToken }
-            });
-            const likesResponse = await axios.get("/api/likes", {
-                params: { username: currentUsername }
+                params: { username, authToken }
             });
 
-            return {...response.data, ...likesResponse.data};
+            return response.data;
+        } catch (err) {
+            console.log(err);
+            return false;
+        }
+    }
+    async function checkLikes(username) {
+        try {
+            const response = await axios.get("/api/likes", {
+                params: { username }
+            });
+
+            return response.data;
         } catch (err) {
             console.log(err);
             return false;
@@ -296,16 +304,16 @@ export default function Profile() {
         async function x() {
             if (!router.query.username) return;
             const storedAuthToken = window.localStorage.getItem("authToken");
-            if (!storedAuthToken) return;
             setAuthToken(storedAuthToken);
-            const req = await checkUser(window.localStorage.getItem("username"), router.query.username, storedAuthToken);
+            const req = await checkUser(router.query.username, storedAuthToken);
+            const likeReq = await checkLikes(window.localStorage.getItem("username"));
             if (!req) {
                 set404(true);
             } else {
                 setBio(req.bio);
                 setPfp(req.pfp);
                 setMe(req.me);
-                setLiked(req.likes || []);
+                setLiked(likeReq.likes || []);
             }
             const mtRush = (await getMtRush(username)).data.mtRush;
             setAlbumCovers(mtRush);
