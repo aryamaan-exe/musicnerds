@@ -82,23 +82,31 @@ export const Navbar = () => {
                 src={pfp}
               />
             </DropdownTrigger>
-            <DropdownMenu aria-label="Dynamic Actions" items={[{"key": "delete", "label": "Logout"}]}>
-              {(item) => (
-                <DropdownItem
-                  key={item.key}
-                  className={item.key === "delete" ? "text-danger" : ""}
-                  color={item.key === "delete" ? "danger" : "default"}
-                  onPress={
-                    () => {
-                      window.localStorage.removeItem("username");
-                      window.localStorage.removeItem("authToken");
-                      router.push("/auth");
-                    }
+            <DropdownMenu>
+              <DropdownItem
+                key="profile"
+                onPress={
+                  () => {
+                    router.push(`/users/${window.localStorage.getItem("username")}`);
                   }
-                >
-                  {item.label}
-                </DropdownItem>
-              )}
+                }
+              >
+                Profile
+              </DropdownItem>
+              <DropdownItem
+                key="logout"
+                className="text-danger"
+                color="danger"
+                onPress={
+                  () => {
+                    window.localStorage.removeItem("username");
+                    window.localStorage.removeItem("authToken");
+                    router.push("/auth");
+                  }
+                }
+              >
+                Logout
+              </DropdownItem>
             </DropdownMenu>
           </Dropdown>}
         </NavbarItem>

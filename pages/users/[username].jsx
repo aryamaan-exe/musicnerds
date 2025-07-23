@@ -1,7 +1,7 @@
 import { Navbar } from "../../components/navbar";
 import { Footer } from "../../components/footer";
 import { useRouter } from 'next/router';
-import { Listbox, ListboxItem, Spinner, Modal, ModalHeader, ModalBody, ModalContent, ModalFooter, Link, Image, Avatar, Button, Card, CardHeader, CardBody, CardFooter, Skeleton, Textarea, useDisclosure, Input } from "@heroui/react";
+import { Dropdown, DropdownItem, DropdownTrigger, DropdownMenu, Spinner, Modal, ModalHeader, ModalBody, ModalContent, ModalFooter, Link, Image, Avatar, Button, Card, CardHeader, CardBody, CardFooter, Skeleton, Textarea, useDisclosure, Input } from "@heroui/react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
@@ -146,7 +146,6 @@ export default function Profile() {
 
 
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
-    const [hidden, setHidden] = useState(true);
     const [likeCounts, setLikeCounts] = useState([]);
     const [profileStat, setProfileStat] = useState({count: 0, name: "followers"});
     const observer = useRef();
@@ -459,20 +458,16 @@ export default function Profile() {
 
                     <h2>Feed</h2>
 
-                    {me && <Button color="secondary" className="mb-2" onPress={() => {
-                        setHidden(!hidden);
-                    }}><Add />New Post</Button>}
-                    
-                    {!hidden && <ListboxWrapper>
-                    <Listbox onAction={(key) => {
-                        setHidden(!hidden);
-                        router.push(`/${key}`)
-                    }}>
-                        <ListboxItem key="new">New post</ListboxItem>
-                        <ListboxItem key="rec">New recommendation</ListboxItem>
-                        <ListboxItem key="track">New album listened</ListboxItem>
-                    </Listbox>
-                    </ListboxWrapper>}
+                    {me && <Dropdown>
+                        <DropdownTrigger>
+                            <Button color="secondary" className="mb-2"><Add />New Post</Button>
+                        </DropdownTrigger>
+                        <DropdownMenu>
+                            <DropdownItem key="new" onPress={() => {router.push("/new")}}>New post</DropdownItem>
+                            <DropdownItem key="rec" onPress={() => {router.push("/rec")}}>New recommendation</DropdownItem>
+                            <DropdownItem key="track" onPress={() => {router.push("/track")}}>New album listened</DropdownItem>
+                        </DropdownMenu>
+                    </Dropdown>}
 
                     <div className="flex flex-col items-center">
                         {feed.map((post, index) => {
@@ -492,6 +487,9 @@ export default function Profile() {
                                         </CardBody>
                                         <CardFooter className="gap-2">
                                             <Button isIconOnly variant="flat" radius="full" onPress={async () => {
+                                                if (!window.localStorage.getItem("authToken")) {
+                                                    router.push("/auth");
+                                                }
                                                 const remove = liked.includes(post.postid);
                                                 await likePost(window.localStorage.getItem("username"), post.postid, remove);
                                                 setLiked(prev =>
