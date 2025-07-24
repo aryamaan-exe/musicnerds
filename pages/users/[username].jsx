@@ -3,6 +3,9 @@ import { Footer } from "../../components/footer";
 import { useRouter } from 'next/router';
 import { Dropdown, DropdownItem, DropdownTrigger, DropdownMenu, Spinner, Modal, ModalHeader, ModalBody, ModalContent, ModalFooter, Link, Image, Avatar, Button, Card, CardHeader, CardBody, CardFooter, Skeleton, Textarea, useDisclosure, Input } from "@heroui/react";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { NewPostModal } from "../../components/newPostModal";
+import { RecModal } from "../../components/recModal";
+import { TrackModal } from "../../components/trackModal";
 import axios from "axios";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -143,9 +146,10 @@ export default function Profile() {
     const [newBio, setNewBio] = useState("");
     const [newPfp, setNewPfp] = useState(null);
     const [albumCovers, setAlbumCovers] = useState([]);
-
-
-    const { isOpen, onOpen, onOpenChange } = useDisclosure();
+    const { isOpen, onOpen, onOpenChange } = useDisclosure(); // pfp modal
+    const { isOpen: newPostModalIsOpen, onOpen: newPostModalOnOpen, onOpenChange: newPostModalOnOpenChange } = useDisclosure();
+    const { isOpen: recModalIsOpen, onOpen: recModalOnOpen, onOpenChange: recModalOnOpenChange } = useDisclosure();
+    const { isOpen: trackModalIsOpen, onOpen: trackModalOnOpen, onOpenChange: trackModalOnOpenChange } = useDisclosure();
     const [likeCounts, setLikeCounts] = useState([]);
     const [profileStat, setProfileStat] = useState({count: 0, name: "followers"});
     const observer = useRef();
@@ -322,8 +326,7 @@ export default function Profile() {
     }, [router.query.username]);
 
     useEffect(() => {
-        if (router.query.newPost === 'true') {
-
+        if (router.query.newPost === "true") {
             setFeed([]);
             setPage(1);
             setHasMore(true);
@@ -377,7 +380,7 @@ export default function Profile() {
                                                                     console.log(result.error);
                                                                 }
                                                                 setPfpLoading(false);
-                                                                onClose()
+                                                                onClose();
                                                             }}>
                                                             Upload
                                                             </Button>
@@ -440,7 +443,7 @@ export default function Profile() {
                                     setEditing(false);
                                  } else {
                                     console.log(result.error);
-                                    setNewBio(bio); // Revert to original bio on error
+                                    setNewBio(bio);
                                 }}}>Save</Button>}
                         </CardFooter>
                         
@@ -458,14 +461,18 @@ export default function Profile() {
 
                     <h2>Feed</h2>
 
+                    <NewPostModal isOpen={newPostModalIsOpen} onOpenChange={newPostModalOnOpenChange}></NewPostModal>
+                    <RecModal isOpen={recModalIsOpen} onOpenChange={recModalOnOpenChange}></RecModal>
+                    <TrackModal isOpen={trackModalIsOpen} onOpenChange={trackModalOnOpenChange}></TrackModal>
+
                     {me && <Dropdown>
                         <DropdownTrigger>
                             <Button color="secondary" className="mb-2"><Add />New Post</Button>
                         </DropdownTrigger>
                         <DropdownMenu>
-                            <DropdownItem key="new" onPress={() => {router.push("/new")}}>New post</DropdownItem>
-                            <DropdownItem key="rec" onPress={() => {router.push("/rec")}}>New recommendation</DropdownItem>
-                            <DropdownItem key="track" onPress={() => {router.push("/track")}}>New album listened</DropdownItem>
+                            <DropdownItem key="new" onPress={newPostModalOnOpen}>New post</DropdownItem>
+                            <DropdownItem key="rec" onPress={recModalOnOpen}>New recommendation</DropdownItem>
+                            <DropdownItem key="track" onPress={trackModalOnOpen}>New album listened</DropdownItem>
                         </DropdownMenu>
                     </Dropdown>}
 
@@ -474,7 +481,7 @@ export default function Profile() {
                             const isLast = index === feed.length - 1;
 
                             return (
-                            <Card key={post.postid} className="m-4 min-w-full" ref={isLast ? lastCardRef : null}>
+                            <Card key={post.postid} className="m-4 min-w-[75vh]" ref={isLast ? lastCardRef : null}>
                                 <div className="md:flex p-4">
                                     {post.image && <Image isZoomed src={post.image} width={150} height={150} />}
                                     <div className="ml-4">
