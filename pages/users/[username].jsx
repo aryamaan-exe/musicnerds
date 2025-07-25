@@ -481,7 +481,7 @@ export default function Profile() {
                             const isLast = index === feed.length - 1;
 
                             return (
-                            <Card key={post.postid} className="m-4 min-w-[75vh]" ref={isLast ? lastCardRef : null}>
+                            <Card key={post.postid} className="m-4 w-[60vw]" ref={isLast ? lastCardRef : null}>
                                 <div className="md:flex p-4">
                                     {post.image && <Image isZoomed src={post.image} width={150} height={150} />}
                                     <div className="ml-4">
