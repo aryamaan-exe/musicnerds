@@ -4,7 +4,25 @@ import { pool } from "./utils/db";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
-    const { username, email, password } = req.body;
+    let { username, email, password } = req.body;
+
+    username = username.trim().toLowerCase();
+    email = email.trim().toLowerCase();
+    if (3 > username.length || username.length > 15)
+    {
+      res.status(500).json({ error: "Username must be between 3 to 15 characters long." });
+    }
+
+    const regex = /[^a-zA-Z0-9\-_.]/g;
+    const regex2 = /[a-zA-Z]/;
+    if (username.match(regex))
+    {
+      res.status(500).json({ error: "Username cannot have any special characters except .-_" });
+    }
+    if (!regex2.test(username))
+    {
+      res.status(500).json({ error: "Username must have at least one letter." });  
+    } 
 
     try {
       const hashedPassword = await bcrypt.hash(password, 10);

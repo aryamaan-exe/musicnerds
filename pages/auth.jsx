@@ -48,6 +48,7 @@ export default function Auth() {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [errorStates, setErrorStates] = useState([[false, ""], [false, ""], [false, ""]]);
     const router = useRouter();
 
     return (
@@ -62,18 +63,53 @@ export default function Auth() {
                             label="Email" 
                             type="email" 
                             className="w-80 mb-2" 
+                            isRequired
                             onChange={(e) => setEmail(e.target.value)}
                         />
                     )}
                     <Input 
                         label="Username" 
+                        isRequired
+                        isInvalid={errorStates[1][0]}
+                        errorMessage={errorStates[1][1]}
                         className="w-80 mb-2" 
-                        onChange={(e) => setUsername(e.target.value)}
+                        onChange={(e) => {
+                            let username = e.target.value.trim().toLowerCase();
+                            let errorStatesCopy = errorStates.copyWithin();
+                            if (authMode === "register")
+                            {
+                                if (3 <= username.length && username.length <= 15)
+                                {
+                                    errorStatesCopy[1] = [false, ""];
+                                    const regex = /[^a-zA-Z0-9\-_.]/g;
+                                    const regex2 = /[a-zA-Z]/;
+                                    if (username.match(regex))
+                                    {
+                                        errorStatesCopy[1] = [true, "Username cannot have any special characters except .-_"]; 
+                                    } else
+                                    {
+                                        setUsername(username);
+                                    }
+                                    if (!regex2.test(username))
+                                    {
+                                        errorStatesCopy[1] = [true, "Username must have at least one letter."]; 
+                                    } 
+                                } else
+                                {
+                                    errorStatesCopy[1] = [true, "Username must be between 3 to 15 characters long."];
+                                }
+                            } else
+                            {
+                                setUsername(username);
+                            }
+                            setErrorStates([...errorStatesCopy]);
+                        }}
                     />
                     <Input 
                         label="Password" 
                         type="password" 
                         className="w-80 mb-8" 
+                        isRequired
                         onChange={(e) => setPassword(e.target.value)}
                     />
                     <Button 
