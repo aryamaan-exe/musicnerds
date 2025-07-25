@@ -1,7 +1,7 @@
 import { Navbar } from "../../components/navbar";
 import { Footer } from "../../components/footer";
 import { useRouter } from 'next/router';
-import { Dropdown, DropdownItem, DropdownTrigger, DropdownMenu, Spinner, Modal, ModalHeader, ModalBody, ModalContent, ModalFooter, Link, Image, Avatar, Button, Card, CardHeader, CardBody, CardFooter, Skeleton, Textarea, useDisclosure, Input } from "@heroui/react";
+import { Snippet, Popover, PopoverTrigger, PopoverContent, Dropdown, DropdownItem, DropdownTrigger, DropdownMenu, Spinner, Modal, ModalHeader, ModalBody, ModalContent, ModalFooter, Link, Image, Avatar, Button, Card, CardHeader, CardBody, CardFooter, Skeleton, Textarea, useDisclosure, Input } from "@heroui/react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { NewPostModal } from "../../components/newPostModal";
 import { RecModal } from "../../components/recModal";
@@ -392,7 +392,7 @@ export default function Profile() {
                                         <Avatar
                                         showFallback
                                         className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
-                                        src={`${pfp}?${Date.now()}`}
+                                        src={pfp}
                                         />
                                     </Link>
                                     </div>
@@ -511,7 +511,14 @@ export default function Profile() {
                                                 <HeartIcon strokeColor={liked.includes(post.postid) ? "#f31260" : "white"} fillColor={liked.includes(post.postid) ? "#f31260" : "none"} /> 
                                             </Button>
                                             <p>{likeCounts[index]}</p>
-                                            <Button isIconOnly variant="flat" radius="full"><ShareIcon /></Button>
+                                            <Popover placement="up">
+                                            <PopoverTrigger>
+                                                <Button isIconOnly variant="flat" radius="full"><ShareIcon /></Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent>
+                                                <Snippet className="bg-dark" symbol="" size="sm">https://musicnerds.vercel.app/posts/{post.url}</Snippet>
+                                            </PopoverContent>
+                                            </Popover>
                                             <Button isIconOnly variant="flat" radius="full"><ReportIcon /></Button>
                                         </CardFooter>
                                     </div>

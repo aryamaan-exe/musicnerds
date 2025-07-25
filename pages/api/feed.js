@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       const offset = (pageNum - 1) * 10;
 
       const feedResult = await pool.query(
-        "SELECT f.postid, f.title, f.body, f.image, f.timestamp, COUNT(l.postid) AS likes FROM feed f LEFT JOIN likes l ON f.postid = l.postid WHERE f.id=$1 GROUP BY f.postid, f.title, f.body, f.image, f.timestamp ORDER BY f.timestamp DESC LIMIT 10 OFFSET $2",
+        "SELECT f.postid, f.title, f.body, f.image, f.timestamp, COUNT(l.postid) AS likes, f.url FROM feed f LEFT JOIN likes l ON f.postid = l.postid WHERE f.id=$1 GROUP BY f.postid, f.title, f.body, f.image, f.timestamp ORDER BY f.timestamp DESC LIMIT 10 OFFSET $2",
         [userId, offset]
       );
 

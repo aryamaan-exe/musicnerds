@@ -62,7 +62,7 @@ export default function Auth() {
                         <Input 
                             label="Email" 
                             type="email" 
-                            className="w-80 mb-2" 
+                            className="w-[40vw] md:w-80 mb-2" 
                             isRequired
                             onChange={(e) => setEmail(e.target.value)}
                         />
@@ -72,7 +72,7 @@ export default function Auth() {
                         isRequired
                         isInvalid={errorStates[1][0]}
                         errorMessage={errorStates[1][1]}
-                        className="w-80 mb-2" 
+                        className="w-[40vw] md:w-80 mb-2" 
                         onChange={(e) => {
                             let username = e.target.value.trim().toLowerCase();
                             let errorStatesCopy = errorStates.copyWithin();
@@ -108,7 +108,7 @@ export default function Auth() {
                     <Input 
                         label="Password" 
                         type="password" 
-                        className="w-80 mb-8" 
+                        className="w-[40vw] md:w-80 mb-8" 
                         isRequired
                         onChange={(e) => setPassword(e.target.value)}
                     />
