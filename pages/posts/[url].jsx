@@ -22,7 +22,20 @@ export default function Post() {
         }
     }
 
-    async function likePost(currentUsername, postID, remove) {
+    async function checkLikes(username) {
+        try {
+            const response = await axios.get("/api/likes", {
+                params: { username }
+            });
+
+            return response.data;
+        } catch (err) {
+            console.log(err);
+            return false;
+        }
+    }
+
+    async function likePost(currentUsername, authToken, postID, remove) {
         try {
             const response = await axios.post("/api/like", {
                 username: currentUsername, authToken, postID, remove
@@ -42,14 +55,27 @@ export default function Post() {
     const [pfp, setPfp] = useState("");
     const [username, setUsername] = useState("ari");
     const [post, setPost] = useState({title: "Post title", body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse eget risus a urna vestibulum varius ut nec lectus. Ut porttitor dolor non odio malesuada egestas. Praesent nec libero in est suscipit pretium egestas et lorem. Quisque vel tellus id massa hendrerit dapibus nec quis lorem. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque dictum sem ligula, vel consectetur lacus vehicula vitae. Integer dolor sem, tempus et mi non, sodales pretium leo."});
-    const [liked, setLiked] = useState(true);
+    const [liked, setLiked] = useState(false);
+    const [likeCount, setLikeCount] = useState(0);
+    const [postID, setPostID] = useState(0);
+    const [postImage, setPostImage] = useState("");
     const router = useRouter();
 
     useEffect(() => {
         async function x() {
             if (!(router.isReady && router.query.url)) return;
-            const request = await getPost(router.query.url);
-            setPost(request.post);
+            const post = (await getPost(router.query.url)).post;
+            console.log(post);
+            setPost(post);
+            if (window.localStorage.getItem("username")) {
+                const likedPosts = (await checkLikes(window.localStorage.getItem("username"))).likes;
+                setLiked(likedPosts[likedPosts.indexOf(post.postid)]);
+            }
+            setLikeCount(parseInt(post.likes));
+            setPostID(post.postid);
+            setUsername(post.username);
+            setPfp(post.pfp);
+            setPostImage(post.image);
         }
         x();
     }, [router.isReady, router.query.url]);
@@ -78,19 +104,13 @@ export default function Post() {
                                 if (!window.localStorage.getItem("authToken")) {
                                     router.push("/auth");
                                 }
-                                await likePost(window.localStorage.getItem("username"), post.postid, liked);
-                                setLiked(prev =>
-                                        liked
-                                        ? prev.filter(id => id !== post.postid)
-                                        : [...prev, post.postid]               
-                                );
-                                let likeCountsCopy = likeCounts.copyWithin();
-                                likeCountsCopy.splice(index, 1, likeCounts[index]+(remove ? -1 : 1));
-                                setLikeCounts(likeCountsCopy);
+                                await likePost(window.localStorage.getItem("username"), window.localStorage.getItem("authToken"), postID, liked);
+                                setLikeCount(likeCount + (liked ? -1 : 1));
+                                setLiked(!liked);
                             }}>
                                 <HeartIcon strokeColor={liked ? "#f31260" : "white"} fillColor={liked ? "#f31260" : "none"} /> 
                             </Button>
-                            <p>{post.likeCount}</p>
+                            <p>{likeCount}</p>
                             <Popover placement="up">
                             <PopoverTrigger>
                                 <Button isIconOnly variant="flat" radius="full"><ShareIcon /></Button>

@@ -7,7 +7,7 @@ import {
 
 import { Link } from "@heroui/link";
 import { link as linkStyles } from "@heroui/theme";
-import { Avatar, Dropdown, DropdownItem, DropdownTrigger, DropdownMenu } from "@heroui/react";
+import { Avatar, Dropdown, DropdownItem, DropdownTrigger, DropdownMenu, Drawer, Button, useDisclosure, DrawerContent, DrawerHeader, DrawerBody, ListboxItem, Listbox } from "@heroui/react";
 import NextLink from "next/link";
 import clsx from "clsx";
 import axios from "axios";
@@ -15,10 +15,18 @@ import { siteConfig } from "@/config/site";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
+export function Hamburger() {
+  return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>;
+
+}
+
 export const Navbar = () => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [pfp, setPfp] = useState("");
-  const [userSettings, setUserSettings] = useState(false);
+  const [username, setUsername] = useState("");
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const router = useRouter();
 
   useEffect(() => {
@@ -27,6 +35,7 @@ export const Navbar = () => {
 
       setLoggedIn(true);
       const username = window.localStorage.getItem("username");
+      setUsername(username);
       const authToken = window.localStorage.getItem("authToken"); 
       const response = await axios.get("/api/user", {
         params: { username: username, authToken }
@@ -87,7 +96,11 @@ export const Navbar = () => {
                 key="profile"
                 onPress={
                   () => {
-                    router.push(`/users/${window.localStorage.getItem("username")}`);
+                    if (router.pathname === "/users/[username]") {
+                      router.reload();
+                    } else {
+                      router.push(`/users/${username}`);
+                    }
                   }
                 }
               >
@@ -109,6 +122,47 @@ export const Navbar = () => {
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>}
+        </NavbarItem>
+      </NavbarContent>
+
+      <NavbarContent className="sm:hidden" justify="end">
+        <NavbarItem>
+          <Button isIconOnly color="secondary" onPress={onOpen}><Hamburger /></Button>
+          <Drawer isOpen={isOpen} size="xs" onClose={onClose}>
+            <DrawerContent>
+              {(onClose) => (
+                <>
+                  <DrawerHeader className="flex flex-row gap-2 items-center">
+                    <Avatar
+                      showFallback
+                      size="md"
+                      src={pfp}
+                    />
+                    {username}
+                  </DrawerHeader>
+                  <DrawerBody>
+                    <Listbox>
+                      <ListboxItem onPress={() => {
+                        console.log(router.pathname);
+                        if (router.pathname === "/users/[username]") {
+                          router.reload();
+                        } else {
+                          router.push(`/users/${username}`);
+                        }
+                      }}>Profile</ListboxItem>
+                      <ListboxItem className="text-danger" onPress={
+                        () => {
+                          window.localStorage.removeItem("username");
+                          window.localStorage.removeItem("authToken");
+                          router.push("/auth");
+                        }
+                      }>Logout</ListboxItem>
+                    </Listbox>
+                  </DrawerBody>
+                </>
+              )}
+            </DrawerContent>
+          </Drawer>
         </NavbarItem>
       </NavbarContent>
     </HeroUINavbar>
