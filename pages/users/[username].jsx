@@ -101,10 +101,10 @@ export function MtRush({ spot, albumCovers, setAlbumCovers, router, authToken, m
 }
 
 export default function Profile() {
-    async function checkUser(username, authToken) {
+    async function checkUser(username, authToken, currentUsername) {
         try {
             const response = await axios.get("/api/user", {
-                params: { username, authToken }
+                params: { username, authToken, currentUsername }
             });
 
             return response.data;
@@ -145,6 +145,7 @@ export default function Profile() {
     const [authToken, setAuthToken] = useState("");
     const [newBio, setNewBio] = useState("");
     const [newPfp, setNewPfp] = useState(null);
+    const [following, setFollowing] = useState(false);
     const [albumCovers, setAlbumCovers] = useState([]);
     const { isOpen, onOpen, onOpenChange } = useDisclosure(); // pfp modal
     const { isOpen: newPostModalIsOpen, onOpen: newPostModalOnOpen, onOpenChange: newPostModalOnOpenChange } = useDisclosure();
@@ -300,7 +301,21 @@ export default function Profile() {
         }
     }
 
-    async function followUser(currentUsername, pageUsername) {
+    async function followUser(username, userToFollow, remove) {
+        try {
+            const response = await axios.post("/api/follow", {
+                username, authToken, userToFollow, remove
+            });
+
+            return response;
+        } catch (err) {
+            console.log(err);
+            if (err.response) {
+                return { success: false, status: err.response.status, error: err.response.data.error };
+            } else {
+                return { success: false, error: err.message };
+            }
+        }
     }
 
     useEffect(() => {
@@ -308,7 +323,7 @@ export default function Profile() {
             if (!router.query.username) return;
             const storedAuthToken = window.localStorage.getItem("authToken");
             setAuthToken(storedAuthToken);
-            const req = await checkUser(router.query.username, storedAuthToken);
+            const req = await checkUser(router.query.username, storedAuthToken, window.localStorage.getItem("username"));
             const likeReq = await checkLikes(window.localStorage.getItem("username"));
             if (!req) {
                 set404(true);
@@ -316,6 +331,7 @@ export default function Profile() {
                 setBio(req.bio);
                 setPfp(req.pfp);
                 setMe(req.me);
+                setFollowing(req.following);
                 setLiked(likeReq.likes || []);
             }
             const mtRush = (await getMtRush(username)).data.mtRush;
@@ -412,9 +428,16 @@ export default function Profile() {
                                     </div>
                                 </div>
                                 <div>
-                                    {!me && <Button color="secondary" onPress={() => {
-                                        followUser(window.localStorage.getItem("username"), username);
-                                    }}><Add />Follow</Button>}
+                                    {!me &&
+                                    (following ? <Button variant="bordered" color="secondary" onPress={() => {
+                                        followUser(window.localStorage.getItem("username"), username, true);
+                                        setFollowing(false);
+                                    }}>Unfollow</Button> :
+
+                                    <Button color="secondary" onPress={() => {
+                                        followUser(window.localStorage.getItem("username"), username, false);
+                                        setFollowing(true);
+                                    }}><Add />Follow</Button>)}
                                 </div>
                         </CardHeader>
 

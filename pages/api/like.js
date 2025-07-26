@@ -1,8 +1,6 @@
 import { authenticated } from "./utils/auth";
 import { pool } from "./utils/db";
 
-
-
 export default async function handler(req, res) {
   if (req.method === "POST") {
     const { username, authToken, postID, remove } = req.body;
