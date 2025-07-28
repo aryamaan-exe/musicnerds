@@ -628,16 +628,18 @@ export default function Profile() {
                                                 if (!window.localStorage.getItem("authToken")) {
                                                     router.push("/auth");
                                                 }
-                                                const remove = liked.includes(post.postid);
-                                                await likePost(window.localStorage.getItem("username"), post.postid, remove);
                                                 setLiked(prev =>
-                                                        remove
-                                                        ? prev.filter(id => id !== post.postid)
-                                                        : [...prev, post.postid]               
+                                                    remove
+                                                    ? prev.filter(id => id !== post.postid)
+                                                    : [...prev, post.postid]               
                                                 );
+
                                                 let likeCountsCopy = likeCounts.copyWithin();
                                                 likeCountsCopy.splice(index, 1, likeCounts[index]+(remove ? -1 : 1));
                                                 setLikeCounts(likeCountsCopy);
+                                                const remove = liked.includes(post.postid);
+                                                await likePost(window.localStorage.getItem("username"), post.postid, remove);
+                                                
                                             }}>
                                                 <HeartIcon strokeColor={liked.includes(post.postid) ? "#f31260" : "white"} fillColor={liked.includes(post.postid) ? "#f31260" : "none"} /> 
                                             </Button>
