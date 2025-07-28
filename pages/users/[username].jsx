@@ -628,6 +628,7 @@ export default function Profile() {
                                                 if (!window.localStorage.getItem("authToken")) {
                                                     router.push("/auth");
                                                 }
+                                                const remove = liked.includes(post.postid);
                                                 setLiked(prev =>
                                                     remove
                                                     ? prev.filter(id => id !== post.postid)
@@ -637,7 +638,6 @@ export default function Profile() {
                                                 let likeCountsCopy = likeCounts.copyWithin();
                                                 likeCountsCopy.splice(index, 1, likeCounts[index]+(remove ? -1 : 1));
                                                 setLikeCounts(likeCountsCopy);
-                                                const remove = liked.includes(post.postid);
                                                 await likePost(window.localStorage.getItem("username"), post.postid, remove);
                                                 
                                             }}>
