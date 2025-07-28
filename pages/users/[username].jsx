@@ -558,7 +558,7 @@ export default function Profile() {
                             </CardBody>
 
                             <CardFooter>
-                                {editing && <Button color="secondary" className="gap-2" onPress={async () => {
+                                {editing && <Button color="secondary" className="mr-2" onPress={async () => {
                                     if (newBio.trim() === "") {
                                         setNewBio(bio);
                                         setEditing(false);
