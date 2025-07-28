@@ -18,6 +18,11 @@ export default async function handler(req, res) {
       }
 
       const { bio, pfp, id } = userResult.rows[0];
+      let followResult = await pool.query(
+        "SELECT * FROM follow WHERE followee=$1",
+        [id]
+      );
+      const followers = followResult.rows.length;
 
       if (currentUsername) {
         const currentUserResult = await pool.query(
@@ -25,7 +30,7 @@ export default async function handler(req, res) {
           [currentUsername]
         );
         const currentUserID = currentUserResult.rows[0].id;
-        const followResult = await pool.query(
+        followResult = await pool.query(
           "SELECT * FROM follow WHERE follower=$1 AND followee=$2",
           [currentUserID, id]
         );
@@ -46,7 +51,7 @@ export default async function handler(req, res) {
         }
       }
 
-      res.status(200).json({ bio, pfp, me: isMe, following });
+      res.status(200).json({ bio, pfp, me: isMe, following, followers });
 
     } catch (error) {
       console.error("User retrieval error:", error);

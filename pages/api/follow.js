@@ -30,7 +30,6 @@ export default async function handler(req, res) {
                 [followerId, followeeId]
             );
         } else {
-            console.log('vvvv');
             await pool.query(
                 "INSERT INTO follow VALUES ($1, $2)",
                 [followerId, followeeId]

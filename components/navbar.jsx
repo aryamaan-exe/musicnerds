@@ -114,6 +114,7 @@ export const Navbar = () => {
                   () => {
                     window.localStorage.removeItem("username");
                     window.localStorage.removeItem("authToken");
+                    window.localStorage.removeItem("lastFMSessionKey");
                     router.push("/auth");
                   }
                 }

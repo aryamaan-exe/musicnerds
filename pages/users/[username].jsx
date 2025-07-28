@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { NewPostModal } from "../../components/newPostModal";
 import { RecModal } from "../../components/recModal";
 import { TrackModal } from "../../components/trackModal";
+import { siLastdotfm } from "simple-icons/icons";
 import axios from "axios";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -45,6 +46,22 @@ export function ReportIcon() {
     return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
             </svg>
+}
+
+export function LastFMIcon() {
+    return (
+        <svg
+            role="img"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+            width={24}
+            height={24}
+            fill="currentColor"
+        >
+            <title>{siLastdotfm.title}</title>
+            <path d={siLastdotfm.path} />
+        </svg>
+    );
 }
 
 export const ListboxWrapper = ({children}) => (
@@ -147,12 +164,16 @@ export default function Profile() {
     const [newPfp, setNewPfp] = useState(null);
     const [following, setFollowing] = useState(false);
     const [albumCovers, setAlbumCovers] = useState([]);
+    const [profileLoading, setProfileLoading] = useState(false);
     const { isOpen, onOpen, onOpenChange } = useDisclosure(); // pfp modal
     const { isOpen: newPostModalIsOpen, onOpen: newPostModalOnOpen, onOpenChange: newPostModalOnOpenChange } = useDisclosure();
     const { isOpen: recModalIsOpen, onOpen: recModalOnOpen, onOpenChange: recModalOnOpenChange } = useDisclosure();
     const { isOpen: trackModalIsOpen, onOpen: trackModalOnOpen, onOpenChange: trackModalOnOpenChange } = useDisclosure();
     const [likeCounts, setLikeCounts] = useState([]);
     const [profileStat, setProfileStat] = useState({count: 0, name: "followers"});
+    const [lastFMUrl, setLastFMUrl] = useState("");
+    const [currentlyListening, setCurrentlyListening] = useState("");
+    const [mtRushLoaded, setMtRushLoaded] = useState(false);
     const observer = useRef();
 
     const lastCardRef = useCallback((node) => {
@@ -318,6 +339,67 @@ export default function Profile() {
         }
     }
 
+    async function getLastFMUrl() {
+        try {
+            const response = await axios.get("/api/getLastFMUrl", {
+                params: {
+                    username: username,
+                }
+            });
+
+            return response.data;
+        } catch (err) {
+            if (err.response) {
+                return { success: false, status: err.response.status, error: err.response.data.error };
+            } else {
+                return { success: false, error: err.message };
+            }
+        }
+    }
+
+    async function connectLastFM(username, authToken, token) {
+        try {
+            const response = await axios.get("/api/connectLastFM", {
+                params: {
+                    username,
+                    authToken,
+                    token // lastfm token
+                }
+            });
+
+            console.log(response.data);
+
+            return response.data;
+        } catch (err) {
+            if (err.response) {
+                console.log(err);
+                return { success: false, status: err.response.status, error: err.response.data.error };
+            } else {
+                return { success: false, error: err.message };
+            }
+        }
+    }
+
+    async function pullCurrentlyListening(lfmUsername) {
+        try {
+            const response = await axios.get("/api/pullCurrentlyListening", {
+                params: {
+                    lfmUsername,
+                }
+            });
+
+            console.log(response.data);
+
+            return response.data.message;
+        } catch (err) {
+            if (err.response) {
+                return "Error";
+            } else {
+                return "Error";
+            }
+        }
+    }
+
     useEffect(() => {
         async function x() {
             if (!router.query.username) return;
@@ -332,11 +414,28 @@ export default function Profile() {
                 setPfp(req.pfp);
                 setMe(req.me);
                 setFollowing(req.following);
+                let profileStatCopy = profileStat;
+                profileStatCopy.count = req.followers;
+                profileStatCopy.name = `follower${req.followers == 1 ? '' : 's'}`
+                setProfileStat({...profileStatCopy});
                 setLiked(likeReq.likes || []);
             }
             const mtRush = (await getMtRush(username)).data.mtRush;
             setAlbumCovers(mtRush);
+            setMtRushLoaded(true);
             await loadFeed(router.query.username, 1);
+            if (!window.localStorage.getItem("lastFMSessionKey")) {
+                setLastFMUrl((await getLastFMUrl(username)).url);
+            } else {
+                setCurrentlyListening(await pullCurrentlyListening(window.localStorage.getItem("lastFMUsername")));
+            }
+            if (router.query.token) {
+                const session = (await connectLastFM(window.localStorage.getItem("username"), window.localStorage.getItem("authToken"), router.query.token));
+                window.localStorage.setItem("lastFMSessionKey", session.key);
+                window.localStorage.setItem("lastFMUsername", session.lfmUsername);
+                setLastFMUrl("");
+            }
+            setProfileLoading(true);
         }
         x();
     }, [router.query.username]);
@@ -365,122 +464,127 @@ export default function Profile() {
                 </div>
             : <>
                 <div className="flex justify-center items-center my-8 mx-4">
-                    <Card className="w-[55vh]">
-                        <CardHeader className="flex justify-between">
-                                <div className="flex flex-row">
-                                    {me && 
+                    <Skeleton className="rounded-3xl" isLoaded={profileLoading}>
+                        <Card className="w-[55vh]">
+                            <CardHeader className="flex justify-between">
                                     <div className="flex flex-row">
-                                    <Link onPress={onOpen}>
-                                        <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
-                                            <ModalContent>
-                                                {(onClose) => (
-                                                    <>
-                                                        <ModalHeader className="flex flex-col gap-1">Upload Avatar</ModalHeader>
-                                                        <ModalBody>
-                                                            <Input type="file" accept="image/*" onChange={async (e) => {
-                                                                const newPfp = e.target.files?.[0]
-                                                                if (!newPfp) return
-                                                                setNewPfp(newPfp);
-                                                            }}></Input>
-                                                        </ModalBody>
-                                                        <ModalFooter>
-                                                            <Button color="danger" variant="light" onPress={onClose}>
-                                                            Close
+                                        {me && 
+                                        <div className="flex flex-row">
+                                        <Link onPress={onOpen}>
+                                            <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
+                                                <ModalContent>
+                                                    {(onClose) => (
+                                                        <>
+                                                            <ModalHeader className="flex flex-col gap-1">Upload Avatar</ModalHeader>
+                                                            <ModalBody>
+                                                                <Input type="file" accept="image/*" onChange={async (e) => {
+                                                                    const newPfp = e.target.files?.[0]
+                                                                    if (!newPfp) return
+                                                                    setNewPfp(newPfp);
+                                                                }}></Input>
+                                                            </ModalBody>
+                                                            <ModalFooter>
+                                                                <Button color="danger" variant="light" onPress={onClose}>
+                                                                Close
+                                                                    </Button>
+                                                                <Button isLoading={pfpLoading} color="secondary" onPress={async () => {
+                                                                    setPfpLoading(true);
+                                                                    const result = await changePfp(username, authToken, newPfp);
+                                                                    if (result.status == 200) {
+                                                                        setPfp(result.data.pfp);
+                                                                    } else {
+                                                                        console.log(result.error);
+                                                                    }
+                                                                    setPfpLoading(false);
+                                                                    onClose();
+                                                                }}>
+                                                                Upload
                                                                 </Button>
-                                                            <Button isLoading={pfpLoading} color="secondary" onPress={async () => {
-                                                                setPfpLoading(true);
-                                                                const result = await changePfp(username, authToken, newPfp);
-                                                                if (result.status == 200) {
-                                                                    setPfp(result.data.pfp);
-                                                                } else {
-                                                                    console.log(result.error);
-                                                                }
-                                                                setPfpLoading(false);
-                                                                onClose();
-                                                            }}>
-                                                            Upload
-                                                            </Button>
-                                                        </ModalFooter>
-                                                    </>
-                                                )}
-                                            </ModalContent>
-                                        </Modal>
-                                        <Avatar
-                                        showFallback
-                                        className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
-                                        src={pfp}
-                                        />
-                                    </Link>
-                                    </div>
-                                    }
-                                    <div className="flex flex-row">
-                                        <div>
-                                            {!me && <Avatar
+                                                            </ModalFooter>
+                                                        </>
+                                                    )}
+                                                </ModalContent>
+                                            </Modal>
+                                            <Avatar
                                             showFallback
                                             className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
-                                            src={`${pfp}?${Date.now()}`}
-                                            />}
+                                            src={pfp}
+                                            />
+                                        </Link>
                                         </div>
-                                        <div>
-                                            <p className="text-xl font-bold">{username}</p>
-                                            <p>{profileStat.count} {profileStat.name}</p>
+                                        }
+                                        <div className="flex flex-row">
+                                            <div>
+                                                {!me && <Avatar
+                                                showFallback
+                                                className="md:w-20 md:h-20 w-14 h-14 text-large mr-4"
+                                                src={`${pfp}?${Date.now()}`}
+                                                />}
+                                            </div>
+                                            <div>
+                                                <p className="text-xl font-bold">{username}</p>
+                                                <p>{profileStat.count} {profileStat.name}</p>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div>
+                                        {!me &&
+                                        (following ? <Button variant="bordered" color="secondary" onPress={() => {
+                                            followUser(window.localStorage.getItem("username"), username, true);
+                                            setFollowing(false);
+                                        }}>Unfollow</Button> :
+
+                                        <Button color="secondary" onPress={() => {
+                                            followUser(window.localStorage.getItem("username"), username, false);
+                                            setFollowing(true);
+                                        }}><Add />Follow</Button>)}
+                                    </div>
+                            </CardHeader>
+
+                            <CardBody>
+                                <div className="flex justify-between">
+                                    {editing ? <Textarea className="mr-2" defaultValue={bio} onChange={(e) => {
+                                        setNewBio(e.target.value);
+                                    }}></Textarea> : <p className="flex justify-center">{bio}</p>}
+                                    {me && <Link onPress={() => {
+                                        setEditing(true);
+                                        setNewBio(bio);
+                                    }}><Edit /></Link>}
                                 </div>
-                                <div>
-                                    {!me &&
-                                    (following ? <Button variant="bordered" color="secondary" onPress={() => {
-                                        followUser(window.localStorage.getItem("username"), username, true);
-                                        setFollowing(false);
-                                    }}>Unfollow</Button> :
+                            </CardBody>
 
-                                    <Button color="secondary" onPress={() => {
-                                        followUser(window.localStorage.getItem("username"), username, false);
-                                        setFollowing(true);
-                                    }}><Add />Follow</Button>)}
-                                </div>
-                        </CardHeader>
+                            <CardFooter>
+                                {editing && <Button color="secondary" onPress={async () => {
+                                    if (newBio.trim() === "") {
+                                        setNewBio(bio);
+                                        setEditing(false);
+                                        return;
+                                    }
+                                    const result = await changeBio(username, authToken, newBio);
+                                    if (result.status == 200) {
+                                        setBio(newBio);
+                                        setEditing(false);
+                                    } else {
+                                        console.log(result.error);
+                                        setNewBio(bio);
+                                    }}}>Save</Button>}
 
-                        <CardBody>
-                            <div className="flex justify-between">
-                                {editing ? <Textarea className="mr-2" defaultValue={bio} onChange={(e) => {
-                                    setNewBio(e.target.value);
-                                }}></Textarea> : <p className="flex justify-center">{bio}</p>}
-                                {me && <Link onPress={() => {
-                                    setEditing(true);
-                                    setNewBio(bio);
-                                }}><Edit /></Link>}
-                            </div>
-                        </CardBody>
-
-                        <CardFooter>
-                            {editing && <Button color="secondary" onPress={async () => {
-                                if (newBio.trim() === "") {
-                                    setNewBio(bio);
-                                    setEditing(false);
-                                    return;
-                                }
-                                const result = await changeBio(username, authToken, newBio);
-                                if (result.status == 200) {
-                                    setBio(newBio);
-                                    setEditing(false);
-                                 } else {
-                                    console.log(result.error);
-                                    setNewBio(bio);
-                                }}}>Save</Button>}
-                        </CardFooter>
-                        
-                    </Card>
+                                {me && (lastFMUrl ? <a href={lastFMUrl}><Button className="bg-red-600"><LastFMIcon /> Connect last.fm</Button></a> : <p>{currentlyListening}</p>)}
+                            </CardFooter>
+                        </Card>
+                    </Skeleton>
                 </div>
 
                 <div className="flex flex-col items-center justify-center">
                     <h2>Mount Rushmore</h2>
                     
-                    <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 gap-4 overflow-hidden mb-8 lg:w-[610px] md:w-[310px] w-[160px] lg:h-[150px] md:h-[300px] h-[600px]">
-                        {Array(4).fill(1).map((_, i) => {
-                            return <MtRush spot={i + 1} albumCovers={albumCovers} setAlbumCovers={setAlbumCovers} router={router} authToken={authToken} me={me}></MtRush>
-                        })}
-                    </div>
+                    <Skeleton className="rounded-3xl" isLoaded={mtRushLoaded}>
+                        <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 gap-4 overflow-hidden mb-8 lg:w-[610px] md:w-[310px] w-[160px] lg:h-[150px] md:h-[320px] h-[620px]">
+                            {Array(4).fill(1).map((_, i) => {
+                                return <MtRush spot={i + 1} albumCovers={albumCovers} setAlbumCovers={setAlbumCovers} router={router} authToken={authToken} me={me}></MtRush>
+                            })}
+                        </div>
+                    </Skeleton>
 
                     <h2>Feed</h2>
 
@@ -552,7 +656,6 @@ export default function Profile() {
 
                         {(loading && hasMore) && <Spinner size="lg" className="m-8" color="secondary" />}
                         </div>
-
                 </div>
             </>
             }

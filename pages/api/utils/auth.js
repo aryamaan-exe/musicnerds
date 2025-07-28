@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { pool } from "./db";
 
 export function getAuthToken(username) {
-  return jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: "24h" });
+  return jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: "999h" });
 }
 
 export async function authenticated(username, authToken, db) {
