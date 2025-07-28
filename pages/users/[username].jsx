@@ -70,6 +70,10 @@ export const ListboxWrapper = ({children}) => (
     </div>
 );
 
+export function LastFMButton() {
+    return <Button className="bg-red-600"><LastFMIcon /> Connect last.fm</Button>
+}
+
 export function MtRush({ spot, albumCovers, setAlbumCovers, router, authToken, me }) {
     async function removeMtRush(username, authToken, i) {
         try {
@@ -554,7 +558,7 @@ export default function Profile() {
                             </CardBody>
 
                             <CardFooter>
-                                {editing && <Button color="secondary" onPress={async () => {
+                                {editing && <Button color="secondary" className="gap-2" onPress={async () => {
                                     if (newBio.trim() === "") {
                                         setNewBio(bio);
                                         setEditing(false);
@@ -569,7 +573,7 @@ export default function Profile() {
                                         setNewBio(bio);
                                     }}}>Save</Button>}
 
-                                {me && (lastFMUrl ? <a href={lastFMUrl}><Button className="bg-red-600"><LastFMIcon /> Connect last.fm</Button></a> : <p>{currentlyListening}</p>)}
+                                {me && (lastFMUrl ? <a href={lastFMUrl}><LastFMButton /></a> : <p>{currentlyListening}</p>)}
                             </CardFooter>
                         </Card>
                     </Skeleton>
