@@ -3,66 +3,15 @@ import { Footer } from "../../components/footer";
 import { useRouter } from 'next/router';
 import { Snippet, Popover, PopoverTrigger, PopoverContent, Dropdown, DropdownItem, DropdownTrigger, DropdownMenu, Spinner, Modal, ModalHeader, ModalBody, ModalContent, ModalFooter, Link, Image, Avatar, Button, Card, CardHeader, CardBody, CardFooter, Skeleton, Textarea, useDisclosure, Input } from "@heroui/react";
 import { useState, useEffect, useRef, useCallback } from "react";
+import Feed from "../../components/Feed";
 import { NewPostModal } from "../../components/newPostModal";
 import { RecModal } from "../../components/recModal";
 import { TrackModal } from "../../components/trackModal";
-import { siLastdotfm } from "simple-icons/icons";
+import { Add, Edit, Close, HeartIcon, ShareIcon, ReportIcon, LastFMIcon } from "../../components/icons";
 import axios from "axios";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import imageCompression from "browser-image-compression";
-
-export function Add() {
-    return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="md:size-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-}
-
-export function Edit() {
-    return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="gray" className="size-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-            </svg>
-}
-
-export function Close() {
-    return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
-}
-
-export function HeartIcon({ fillColor, strokeColor }) {
-    return <svg xmlns="http://www.w3.org/2000/svg" fill={fillColor} viewBox="0 0 24 24" strokeWidth={1.5} stroke={strokeColor} className="size-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-            </svg>
-}
-
-export function ShareIcon() {
-    return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
-            </svg>
-}
-
-export function ReportIcon() {
-    return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
-            </svg>
-}
-
-export function LastFMIcon() {
-    return (
-        <svg
-            role="img"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-            width={24}
-            height={24}
-            fill="currentColor"
-        >
-            <title>{siLastdotfm.title}</title>
-            <path d={siLastdotfm.path} />
-        </svg>
-    );
-}
 
 export async function getLastFMUrl(username) {
     try {
@@ -79,6 +28,19 @@ export async function getLastFMUrl(username) {
         } else {
             return { success: false, error: err.message };
         }
+    }
+}
+
+async function getFeed(username, page) {
+    try {
+        const response = await axios.get("/api/feed", {
+            headers: { 'Cache-Control': 'no-cache' },
+            params: { username, page, _t: Date.now() }
+        });
+        return response.data;
+    } catch (err) {
+        console.error("Error getting feed:", err);
+        return { success: false, error: err.message };
     }
 }
 
@@ -121,10 +83,10 @@ export function MtRush({ spot, albumCovers, setAlbumCovers, router, authToken, m
         <div onPointerEnter={() => {setCloseButtonVisible(true)}} onPointerLeave={() => {setCloseButtonVisible(false)}} className="relative z-0">
             <>
                 {me && <Button className={closeButtonVisible ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
-                    removeMtRush(router.query.username, authToken, spot);
                     let albumCoversCopy = albumCovers.copyWithin();
                     albumCovers.splice(spot-1,1,"");
                     setAlbumCovers(albumCoversCopy);
+                    removeMtRush(router.query.username, authToken, spot);
                 }}>
                     <Close />
                 </Button>}
@@ -170,11 +132,7 @@ export default function Profile() {
 
     const router = useRouter();
     const username = router.query.username;
-    const [feed, setFeed] = useState([]);
-    const [loading, setLoading] = useState(false);
     const [pfpLoading, setPfpLoading] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
-    const [page, setPage] = useState(1);
     const [notFound, set404] = useState(false);
     const [bio, setBio] = useState("");
     const [pfp, setPfp] = useState("");
@@ -191,74 +149,12 @@ export default function Profile() {
     const { isOpen: newPostModalIsOpen, onOpen: newPostModalOnOpen, onOpenChange: newPostModalOnOpenChange } = useDisclosure();
     const { isOpen: recModalIsOpen, onOpen: recModalOnOpen, onOpenChange: recModalOnOpenChange } = useDisclosure();
     const { isOpen: trackModalIsOpen, onOpen: trackModalOnOpen, onOpenChange: trackModalOnOpenChange } = useDisclosure();
-    const [likeCounts, setLikeCounts] = useState([]);
     const [profileStat, setProfileStat] = useState({count: 0, name: "followers"});
     const [lastFMUrl, setLastFMUrl] = useState("");
     const [currentlyListening, setCurrentlyListening] = useState("");
     const [mtRushLoaded, setMtRushLoaded] = useState(false);
-    const observer = useRef();
-
-    const lastCardRef = useCallback((node) => {
-        if (loading) return;
-        if (observer.current) observer.current.disconnect();
-        observer.current = new IntersectionObserver(async (entries) => {
-            if (entries[0].isIntersecting) {
-                await loadFeed(router.query.username, page);
-            }
-        });
-        if (node) observer.current.observe(node);
-    }, [loading, hasMore]);
-
-    async function getFeed(username, page) {
-        try {
-            const response = await axios.get("/api/feed", {
-                headers: {
-                    'Cache-Control': 'no-cache'
-                },
-
-                params: {
-                    username: username,
-                    page: page,
-                    _t: Date.now()
-                }
-            });
-
-
-            return response.data;
-        } catch (err) {
-            if (err.response) {
-                return { success: false, status: err.response.status, error: err.response.data.error };
-            } else {
-                return { success: false, error: err.message };
-            }
-        }
-    }
-
-    const loadFeed = async (username, page) => {
-        if (loading || !hasMore) return;
-
-        setLoading(true);
-        const newItems = (await getFeed(username, page)).posts;
-        if (!newItems || newItems.length === 0) {
-            setHasMore(false);
-            return;
-        }
-
-        try {
-            const updatedFeed = [...feed, ...newItems];
-
-            setFeed(updatedFeed);
-            const newLikeCounts = updatedFeed.map((post) => {
-                return parseInt(post.likes, 10);
-            });
-            setLikeCounts(newLikeCounts);
-        } catch (err) {
-            console.log(err);
-        }
-        
-        setLoading(false);
-        setPage(page + 1);
-    };
+    const [initialFeedLoading, setInitialFeedLoading] = useState(true);
+    const [initialFeed, setInitialFeed] = useState([]);
 
     async function changeBio(username, authToken, bio) {
         try {
@@ -408,54 +304,72 @@ export default function Profile() {
     }
 
     useEffect(() => {
-        async function x() {
-            if (!router.query.username) return;
-            const storedAuthToken = window.localStorage.getItem("authToken");
-            setAuthToken(storedAuthToken);
-            const req = await checkUser(router.query.username, storedAuthToken, window.localStorage.getItem("username"));
-            const likeReq = await checkLikes(window.localStorage.getItem("username"));
-            if (!req) {
-                set404(true);
-            } else {
-                setBio(req.bio);
-                setPfp(req.pfp);
-                setMe(req.me);
-                setFollowing(req.following);
-                let profileStatCopy = profileStat;
-                profileStatCopy.count = req.followers;
-                profileStatCopy.name = `follower${req.followers == 1 ? '' : 's'}`
-                setProfileStat({...profileStatCopy});
-                setLiked(likeReq.likes || []);
+        async function initializeProfile() {
+        if (!router.query.username) return;
+        
+        const storedAuthToken = window.localStorage.getItem("authToken");
+        setAuthToken(storedAuthToken);
+        
+        try {
+            const userData = await checkUser(
+            router.query.username,
+            storedAuthToken,
+            window.localStorage.getItem("username")
+            );
+            
+            if (!userData) {
+            set404(true);
+            return;
             }
-            const mtRush = (await getMtRush(username)).data.mtRush;
-            setAlbumCovers(mtRush);
-            setMtRushLoaded(true);
-            await loadFeed(router.query.username, 1);
-            if (!window.localStorage.getItem("lastFMSessionKey")) {
-                setLastFMUrl((await getLastFMUrl(username)).url);
-            } else {
-                setCurrentlyListening(await pullCurrentlyListening(window.localStorage.getItem("lastFMUsername")));
-            }
-            if (router.query.token) {
-                const session = (await connectLastFM(window.localStorage.getItem("username"), window.localStorage.getItem("authToken"), router.query.token));
-                window.localStorage.setItem("lastFMSessionKey", session.key);
-                window.localStorage.setItem("lastFMUsername", session.lfmUsername);
-                setLastFMUrl("");
-            }
-            setProfileLoading(true);
-        }
-        x();
-    }, [router.query.username]);
 
-    useEffect(() => {
-        if (router.query.newPost === "true") {
-            setFeed([]);
-            setPage(1);
-            setHasMore(true);
-            loadFeed(username, 1);
-            router.replace(`/users/${username}`, undefined, { shallow: true });
+            setBio(userData.bio);
+            setPfp(userData.pfp);
+            setMe(userData.me);
+            setFollowing(userData.following);
+            setProfileStat({
+            count: userData.followers,
+            name: `follower${userData.followers === 1 ? '' : 's'}`
+            });
+
+            const likesData = await checkLikes(window.localStorage.getItem("username"));
+            setLiked(likesData.likes || []);
+            
+            const mtRushData = await getMtRush(router.query.username);
+            setAlbumCovers(mtRushData?.data?.mtRush || []);
+            setMtRushLoaded(true);
+            
+            const feedData = await getFeed(router.query.username, 1);
+            setInitialFeed(feedData.posts || []);
+            
+            if (!window.localStorage.getItem("lastFMSessionKey")) {
+            const lastFMData = await getLastFMUrl(router.query.username);
+            setLastFMUrl(lastFMData?.url || "");
+            } else {
+            const listening = await pullCurrentlyListening(window.localStorage.getItem("lastFMUsername"));
+            setCurrentlyListening(listening || "");
+            }
+            
+            if (router.query.token) {
+            const session = await connectLastFM(
+                window.localStorage.getItem("username"),
+                window.localStorage.getItem("authToken"),
+                router.query.token
+            );
+            window.localStorage.setItem("lastFMSessionKey", session?.key || "");
+            window.localStorage.setItem("lastFMUsername", session?.lfmUsername || "");
+            setLastFMUrl("");
+            }
+        } catch (error) {
+            console.error("Profile initialization error:", error);
+            set404(true);
+        } finally {
+            setProfileLoading(true);
+            setInitialFeedLoading(false);
         }
-    }, [router.query.newPost, username]);
+    }
+
+        initializeProfile();
+    }, [router.query.username, router.query.token]);
 
     return <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -606,78 +520,21 @@ export default function Profile() {
                         </div>
                     </Skeleton>
 
-                    <h2 className="mt-8">Feed</h2>
-
-                    <NewPostModal isOpen={newPostModalIsOpen} onOpenChange={newPostModalOnOpenChange}></NewPostModal>
-                    <RecModal isOpen={recModalIsOpen} onOpenChange={recModalOnOpenChange}></RecModal>
-                    <TrackModal isOpen={trackModalIsOpen} onOpenChange={trackModalOnOpenChange}></TrackModal>
-
-                    {me && <Dropdown>
-                        <DropdownTrigger>
-                            <Button color="secondary" className="mb-2"><Add />New Post</Button>
-                        </DropdownTrigger>
-                        <DropdownMenu>
-                            <DropdownItem key="new" onPress={newPostModalOnOpen}>New post</DropdownItem>
-                            <DropdownItem key="rec" onPress={recModalOnOpen}>New recommendation</DropdownItem>
-                            <DropdownItem key="track" onPress={trackModalOnOpen}>New album listened</DropdownItem>
-                        </DropdownMenu>
-                    </Dropdown>}
-
-                    <div className="flex flex-col items-center">
-                        {feed.map((post, index) => {
-                            const isLast = index === feed.length - 1;
-
-                            return (
-                            <Card key={post.postid} className="m-4 w-[60vw]" ref={isLast ? lastCardRef : null}>
-                                <div className="md:flex p-4">
-                                    {post.image && <Image isZoomed src={post.image} width={150} height={150} />}
-                                    <div className="ml-4">
-                                        <CardHeader>
-                                            <h3 className="text-lg font-semibold">{post.title}</h3>
-                                        </CardHeader>
-                                        <CardBody>
-                                            {post.body}
-                                            <p className="text-gray-400 mt-8">{dayjs(post.timestamp).fromNow()}</p>
-                                        </CardBody>
-                                        <CardFooter className="gap-2">
-                                            <Button isIconOnly variant="flat" radius="full" onPress={async () => {
-                                                if (!window.localStorage.getItem("authToken")) {
-                                                    router.push("/auth");
-                                                }
-                                                const remove = liked.includes(post.postid);
-                                                setLiked(prev =>
-                                                    remove
-                                                    ? prev.filter(id => id !== post.postid)
-                                                    : [...prev, post.postid]               
-                                                );
-
-                                                let likeCountsCopy = likeCounts.copyWithin();
-                                                likeCountsCopy.splice(index, 1, likeCounts[index]+(remove ? -1 : 1));
-                                                setLikeCounts(likeCountsCopy);
-                                                await likePost(window.localStorage.getItem("username"), post.postid, remove);
-                                                
-                                            }}>
-                                                <HeartIcon strokeColor={liked.includes(post.postid) ? "#f31260" : "white"} fillColor={liked.includes(post.postid) ? "#f31260" : "none"} /> 
-                                            </Button>
-                                            <p>{likeCounts[index]}</p>
-                                            <Popover placement="up">
-                                            <PopoverTrigger>
-                                                <Button isIconOnly variant="flat" radius="full"><ShareIcon /></Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent>
-                                                <Snippet className="bg-dark" symbol="" size="sm">https://musicnerds.vercel.app/posts/{post.url}</Snippet>
-                                            </PopoverContent>
-                                            </Popover>
-                                            <Button isIconOnly variant="flat" radius="full"><ReportIcon /></Button>
-                                        </CardFooter>
-                                    </div>
-                                </div>
-                            </Card>
-                            );
-                        })}
-
-                        {(loading && hasMore) && <Spinner size="lg" className="m-8" color="secondary" />}
+                    <h2 className="text-2xl font-bold mt-8">Feed</h2>
+                    
+                    {initialFeedLoading ? (
+                        <div className="flex justify-center items-center h-64">
+                        <Spinner size="lg" color="secondary" />
                         </div>
+                    ) : (
+                        <Feed 
+                        username={username}
+                        authToken={authToken}
+                        me={me}
+                        initialFeed={initialFeed}
+                        initialLiked={liked}
+                        />
+                    )}
                 </div>
             </>
             }

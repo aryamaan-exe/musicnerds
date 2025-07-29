@@ -1,5 +1,5 @@
 import { Footer } from "@/components/footer";
-import { Navbar } from "@/components/navbar";
+import { Navbar } from "../components/navbar";
 import { useEffect, useState } from "react";
 import { LastFMButton } from "./users/[username]";
 import { Card, CardBody, CardHeader, Image, Skeleton } from "@heroui/react";

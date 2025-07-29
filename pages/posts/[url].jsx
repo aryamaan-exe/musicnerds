@@ -2,7 +2,7 @@ import { Snippet, Card, CardHeader, CardBody, CardFooter, Avatar, Button, Popove
 import { HeartIcon } from "../users/[username]";
 import { ShareIcon } from "../users/[username]";
 import { ReportIcon } from "../users/[username]";
-import { Navbar } from "@/components/navbar";
+import { Navbar } from "../../components/navbar";
 import { Footer } from "@/components/footer";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";

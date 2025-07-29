@@ -1,6 +1,6 @@
 import { Card, CardBody, Image, Button, Spinner } from "@heroui/react";
 import { useRef, useCallback } from "react";
-import { Add } from "../pages/users/[username]";
+import { Add } from "./icons";
 
 export function AlbumResults({ results, loading, hasMore, onAdd, onLoadMore }) {
   const observer = useRef();
