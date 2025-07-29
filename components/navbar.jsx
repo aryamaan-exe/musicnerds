@@ -85,22 +85,21 @@ export const Navbar = () => {
           
           <Dropdown>
             <DropdownTrigger>
-              <Avatar
-                showFallback
-                size="md"
-                src={pfp}
-              />
+              <div data-theme="light" className="rounded-3xl">
+                <Avatar
+                  isBordered
+                  showFallback
+                  size="md"
+                  src={pfp}
+                />
+              </div>
             </DropdownTrigger>
             <DropdownMenu>
               <DropdownItem
                 key="profile"
                 onPress={
                   () => {
-                    if (router.pathname === "/users/[username]") {
-                      router.reload();
-                    } else {
-                      router.push(`/users/${username}`);
-                    }
+                    router.push(`/users/${username}`);
                   }
                 }
               >
@@ -144,12 +143,7 @@ export const Navbar = () => {
                   <DrawerBody>
                     <Listbox>
                       <ListboxItem onPress={() => {
-                        console.log(router.pathname);
-                        if (router.pathname === "/users/[username]") {
-                          router.reload();
-                        } else {
-                          router.push(`/users/${username}`);
-                        }
+                        router.push(`/users/${username}`);
                       }}>Profile</ListboxItem>
                       <ListboxItem className="text-danger" onPress={
                         () => {

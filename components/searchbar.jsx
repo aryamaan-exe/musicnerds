@@ -1,5 +1,5 @@
 import { Input, Button } from "@heroui/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function SearchIcon() {
     return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
@@ -8,7 +8,22 @@ export function SearchIcon() {
 }
 
 export function SearchBar({ onSearch, loading }) {
+  const searchButton = useRef();
   const [value, setValue] = useState("");
+
+  useEffect(() => {
+    const keyDown = e => {
+      if (e.key == "Enter") {
+        searchButton.current?.click();
+      }
+    }  
+    
+    window.addEventListener("keydown", keyDown);
+
+    return () => {
+      window.removeEventListener("keydown", keyDown);
+    }
+  }, []);
 
   return (
     <div className="flex gap-2">
@@ -18,6 +33,7 @@ export function SearchBar({ onSearch, loading }) {
         onChange={e => setValue(e.target.value)}
       />
       <Button
+        ref={searchButton}
         color="secondary"
         onPress={() => onSearch(value)}
         isLoading={loading}

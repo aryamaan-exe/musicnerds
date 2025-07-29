@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navbar } from "../components/navbar";
 import { Footer } from "../components/footer";
 import { Button, Input } from "@heroui/react";
@@ -49,7 +49,22 @@ export default function Auth() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [errorStates, setErrorStates] = useState([[false, ""], [false, ""], [false, ""]]);
+    const authButton = useRef();
     const router = useRouter();
+
+    useEffect(() => {
+        const keyDown = e => {
+            if (e.key == "Enter") {
+                authButton.current?.click();
+            }
+        }
+
+        window.addEventListener("keydown", keyDown);
+        
+        return () => {
+            window.removeEventListener("keydown", keyDown);
+        };
+    }, []);
 
     return (
         <>
@@ -113,6 +128,7 @@ export default function Auth() {
                         onChange={(e) => setPassword(e.target.value)}
                     />
                     <Button 
+                        ref={authButton}
                         isLoading={loading} 
                         color="secondary" 
                         onPress={async () => {

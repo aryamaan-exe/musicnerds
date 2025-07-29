@@ -14,7 +14,7 @@ export const siteConfig = {
     },
     {
       label: "for you",
-      href: "/foryou",
+      href: "/fyp",
     },
   ],
   links: {

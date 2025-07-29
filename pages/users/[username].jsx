@@ -64,6 +64,24 @@ export function LastFMIcon() {
     );
 }
 
+export async function getLastFMUrl(username) {
+    try {
+        const response = await axios.get("/api/getLastFMUrl", {
+            params: {
+                username
+            }
+        });
+
+        return response.data;
+    } catch (err) {
+        if (err.response) {
+            return { success: false, status: err.response.status, error: err.response.data.error };
+        } else {
+            return { success: false, error: err.message };
+        }
+    }
+}
+
 export const ListboxWrapper = ({children}) => (
     <div className="w-full max-w-[260px] border-small px-1 py-2 rounded-small border-default-200 dark:border-default-100">
     {children}
@@ -222,7 +240,6 @@ export default function Profile() {
         setLoading(true);
         const newItems = (await getFeed(username, page)).posts;
         if (!newItems || newItems.length === 0) {
-
             setHasMore(false);
             return;
         }
@@ -263,18 +280,22 @@ export default function Profile() {
 
     async function changePfp(username, authToken, pfp) {
         try {
-            const options = {
-                maxSizeMB: 0.5,
-                maxWidthOrHeight: 800,
-                useWebWorker: true
+            let resizedPfpB64;
+
+            if (pfp != "") {
+                const options = {
+                    maxSizeMB: 0.5,
+                    maxWidthOrHeight: 800,
+                    useWebWorker: true
+                }
+                const resizedPfp = await imageCompression(pfp, options)
+                const reader = new FileReader()
+                resizedPfpB64 = await new Promise(r=>{reader.onload=()=>r(reader.result.split(",")[1]);reader.readAsDataURL(resizedPfp)})
             }
-            const resizedPfp = await imageCompression(pfp, options)
-            const reader = new FileReader()
-            const resizedPfpB64 = await new Promise(r=>{reader.onload=()=>r(reader.result.split(",")[1]);reader.readAsDataURL(resizedPfp)})
 
             const response = axios.post("/api/pfp", {
-                username: username,
-                pfp: resizedPfpB64
+                username,
+                pfp: resizedPfpB64 || ""
             }, {
                 headers: {
                     Authorization: `Bearer ${authToken}`
@@ -335,24 +356,6 @@ export default function Profile() {
             return response;
         } catch (err) {
             console.log(err);
-            if (err.response) {
-                return { success: false, status: err.response.status, error: err.response.data.error };
-            } else {
-                return { success: false, error: err.message };
-            }
-        }
-    }
-
-    async function getLastFMUrl() {
-        try {
-            const response = await axios.get("/api/getLastFMUrl", {
-                params: {
-                    username: username,
-                }
-            });
-
-            return response.data;
-        } catch (err) {
             if (err.response) {
                 return { success: false, status: err.response.status, error: err.response.data.error };
             } else {
@@ -488,9 +491,22 @@ export default function Profile() {
                                                                 }}></Input>
                                                             </ModalBody>
                                                             <ModalFooter>
+                                                                <Button color="danger" variant="light" onPress={async () => {
+                                                                    setPfpLoading(true);
+                                                                    const result = await changePfp(username, authToken, "");
+                                                                    if (result.status == 200) {
+                                                                        setPfp("");
+                                                                    } else {
+                                                                        console.log(result.error);
+                                                                    }
+                                                                    setPfpLoading(false);
+                                                                    onClose();
+                                                                }}>
+                                                                Clear Avatar
+                                                                </Button>
                                                                 <Button color="danger" variant="light" onPress={onClose}>
                                                                 Close
-                                                                    </Button>
+                                                                </Button>
                                                                 <Button isLoading={pfpLoading} color="secondary" onPress={async () => {
                                                                     setPfpLoading(true);
                                                                     const result = await changePfp(username, authToken, newPfp);
@@ -583,14 +599,14 @@ export default function Profile() {
                     <h2>Mount Rushmore</h2>
                     
                     <Skeleton className="rounded-3xl" isLoaded={mtRushLoaded}>
-                        <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 gap-4 overflow-hidden mb-8 lg:w-[610px] md:w-[310px] w-[160px] lg:h-[150px] md:h-[320px] h-[620px]">
+                        <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 gap-4 overflow-hidden lg:w-[610px] md:w-[310px] w-[160px] lg:h-[150px] md:h-[320px] h-[620px]">
                             {Array(4).fill(1).map((_, i) => {
                                 return <MtRush spot={i + 1} albumCovers={albumCovers} setAlbumCovers={setAlbumCovers} router={router} authToken={authToken} me={me}></MtRush>
                             })}
                         </div>
                     </Skeleton>
 
-                    <h2>Feed</h2>
+                    <h2 className="mt-8">Feed</h2>
 
                     <NewPostModal isOpen={newPostModalIsOpen} onOpenChange={newPostModalOnOpenChange}></NewPostModal>
                     <RecModal isOpen={recModalIsOpen} onOpenChange={recModalOnOpenChange}></RecModal>

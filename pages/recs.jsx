@@ -3,6 +3,7 @@ import { Navbar } from "@/components/navbar";
 import { useEffect, useState } from "react";
 import { LastFMButton } from "./users/[username]";
 import { Card, CardBody, CardHeader, Image, Skeleton } from "@heroui/react";
+import { getLastFMUrl } from "./users/[username]";
 import axios from "axios";
 
 export default function Recs() {
@@ -20,6 +21,7 @@ export default function Recs() {
     }
 
     const [lastFMConnected, setLastFMConnected] = useState(false);
+    const [lastFMUrl, setLastFMUrl] = useState("");
     const [recommendations, setRecommendations] = useState([]);
     const [recsLoaded, setRecsLoaded] = useState(false);
 
@@ -28,6 +30,8 @@ export default function Recs() {
             if (!window.localStorage.getItem("authToken")) return;
             if (window.localStorage.getItem("lastFMSessionKey")) {
                 setLastFMConnected(true);
+            } else {
+                setLastFMUrl((await getLastFMUrl(window.localStorage.getItem("username"))).url);
             }
         }
         x();
@@ -54,15 +58,12 @@ export default function Recs() {
                                 return <div className="mb-4">
                                             <Card>
                                                 <CardHeader className="flex-row items-start">
-                                                    <Image src={album.url} width={"50%"} height={"50%"} />
-                                                    <div className="">
+                                                    <Image src={album.url} />
+                                                    <div className="ml-8">
                                                         <h3 className="text-xl font-bold">{album.title}</h3>
                                                         <h4 className="text-xl">{album.artist}</h4>
                                                     </div>
                                                 </CardHeader>
-                                                <CardBody className="flex-row items-center gap-4">
-                                                    Because you liked {album.recFrom}
-                                                </CardBody>
                                             </Card>
                                         </div>
                             }) : 
@@ -92,7 +93,7 @@ export default function Recs() {
                         <div>
                             <h1>Connect your Last.fm</h1>
                             <p className="mb-4">You need to connect your Last.fm account to get personalized recommendations.</p>
-                            <LastFMButton />
+                            <a href={lastFMUrl}><LastFMButton /></a>
                         </div>
                     </div>
                 }

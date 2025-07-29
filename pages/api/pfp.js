@@ -20,18 +20,26 @@ export default async function handler(req, res) {
         return;
       }
 
+      if (pfp === "") {
+        await pool.query(
+          "UPDATE users SET pfp='https://res.cloudinary.com/dxpihu5ac/image/upload/v1708642351/default_pfp.png' WHERE username=$1",
+          [username]
+        );
+        res.status(200).json({ message: "Profile picture cleared successfully" });
+        return;
+      }
 
       try {
-            if (pfp && typeof pfp === 'string' && !pfp.startsWith("data:image")) {
-                pfp = `data:image/png;base64,${pfp}`;
-            }
+        if (typeof pfp === 'string' && !pfp.startsWith("data:image")) {
+          pfp = `data:image/png;base64,${pfp}`;
+        }
 
-            const uploadResult = await cloudinary.uploader.upload(pfp, {
+        const uploadResult = await cloudinary.uploader.upload(pfp, {
         folder: "profile_pictures",
       });
 
       await pool.query(
-        "UPDATE users SET pfp = $1 WHERE username = $2",
+        "UPDATE users SET pfp=$1 WHERE username=$2",
         [uploadResult.secure_url, username]
       );
 
@@ -43,6 +51,7 @@ export default async function handler(req, res) {
         return;
       }
     } catch (error) {
+      console.log(error);
       res.status(500).json({ error: "Failed to update profile picture" });
     }
   } else {
