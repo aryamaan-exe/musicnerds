@@ -80,9 +80,9 @@ export function MtRush({ spot, albumCovers, setAlbumCovers, router, authToken, m
         }}>
             <p className="text-4xl">{me ? "+" : ""}</p>
         </Button>) : (
-        <div onPointerEnter={() => {setCloseButtonVisible(true)}} onPointerLeave={() => {setCloseButtonVisible(false)}} className="relative z-0">
+        <div onMouseEnter={() => {setCloseButtonVisible(true)}} onMouseLeave={() => {setCloseButtonVisible(false)}} className="relative z-0">
             <>
-                {me && <Button className={closeButtonVisible ? "absolute z-10 ml-[105px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
+                {me && <Button className={closeButtonVisible ? "absolute z-50 ml-[115px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
                     let albumCoversCopy = albumCovers.copyWithin();
                     albumCovers.splice(spot-1,1,"");
                     setAlbumCovers(albumCoversCopy);
