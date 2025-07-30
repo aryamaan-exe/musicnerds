@@ -21,3 +21,9 @@ h2 {
     margin-bottom: 1rem;
     font-weight: 700;
 }
+
+input:focus,
+textarea:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}

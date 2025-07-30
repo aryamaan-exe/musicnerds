@@ -174,7 +174,7 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
             return (
             <Card key={post.postid} className="m-4 w-[60vw]" ref={isLast ? lastCardRef : null}>
                 <div className="md:flex p-4">
-                {post.image && <Image isZoomed src={post.image} width={150} height={150} />}
+                    {post.image && <Image isZoomed src={post.image} width={150} height={150} />}
                 <div className="ml-4">
                     <CardHeader className="flex flex-col items-start">
                         {
@@ -184,17 +184,17 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
                                     size="lg"
                                     className="mr-4"
                                     src={post.pfp}
-                                    />
+                                   />
                                 <p className="font-semibold text-lg">{post.username}</p>
                             </div>
                         }
                         <h3 className="text-xl font-bold">{post.title}</h3>
                     </CardHeader>
                     <CardBody>
-                    {post.body}
-                    <p className="text-gray-400 mt-8">
-                        {dayjs(post.timestamp).fromNow()}
-                    </p>
+                        {post.body}
+                        <p className="text-gray-400 mt-8">
+                            {dayjs(post.timestamp).fromNow()}
+                        </p>
                     </CardBody>
                     <CardFooter className="gap-2">
                     <Button
@@ -202,12 +202,12 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
                         variant="flat"
                         radius="full"
                         onPress={async () => {
-                        if (!authToken) return;
-                        await likePost(
-                            localStorage.getItem("username"),
-                            post.postid,
-                            isLiked
-                        );
+                            if (!authToken) return;
+                            await likePost(
+                                localStorage.getItem("username"),
+                                post.postid,
+                                isLiked
+                            );
                         }}
                     >
                         <HeartIcon
