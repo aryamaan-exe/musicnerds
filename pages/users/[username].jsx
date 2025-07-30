@@ -74,7 +74,7 @@ export function MtRush({ spot, albumCovers, setAlbumCovers, router, authToken, m
     }
 
     const [closeButtonVisible, setCloseButtonVisible] = useState(false);
-    return <div className="w-full">
+    return <div className="aspect-square w-[150px]">
         {albumCovers[spot - 1] == "" ? (<Button disabled={!me} className="w-[94%] h-[95%] m-1" style={{outlineStyle: "dashed", outlineColor: "white", backgroundColor: "black"}} onPress={() => {
             router.push(`/mountrushmore?spot=${spot}`)
         }}>
@@ -94,8 +94,9 @@ export function MtRush({ spot, albumCovers, setAlbumCovers, router, authToken, m
                 src={albumCovers[spot - 1]}
                 width={150} 
                 height={150} 
-                className="w-full h-auto object-cover z-5"
+                className="w-full h-auto object-cover rounded"
                 />
+
             </>
         </div>)}
     </div>
@@ -114,6 +115,7 @@ export default function Profile() {
             return false;
         }
     }
+    
     async function checkLikes(username) {
         try {
             const response = await axios.get("/api/likes", {
@@ -226,23 +228,6 @@ export default function Profile() {
         }
     }
 
-    async function likePost(currentUsername, postID, remove) {
-        try {
-            const response = await axios.post("/api/like", {
-                username: currentUsername, authToken, postID, remove
-            });
-
-            return response;
-        } catch (err) {
-            console.log(err);
-            if (err.response) {
-                return { success: false, status: err.response.status, error: err.response.data.error };
-            } else {
-                return { success: false, error: err.message };
-            }
-        }
-    }
-
     async function followUser(username, userToFollow, remove) {
         try {
             const response = await axios.post("/api/follow", {
@@ -269,8 +254,6 @@ export default function Profile() {
                     token // lastfm token
                 }
             });
-
-            console.log(response.data);
 
             return response.data;
         } catch (err) {
@@ -513,14 +496,38 @@ export default function Profile() {
                     <h2>Mount Rushmore</h2>
                     
                     <Skeleton className="rounded-3xl" isLoaded={mtRushLoaded}>
-                        <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 gap-4 overflow-hidden lg:w-[610px] md:w-[310px] w-[160px] lg:h-[150px] md:h-[320px] h-[620px]">
-                            {Array(4).fill(1).map((_, i) => {
-                                return <MtRush spot={i + 1} albumCovers={albumCovers} setAlbumCovers={setAlbumCovers} router={router} authToken={authToken} me={me}></MtRush>
-                            })}
+                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {Array(4).fill(1).map((_, i) => (
+                                <div className="w-[150px] h-[150px]">
+                                <MtRush
+                                    spot={i + 1}
+                                    albumCovers={albumCovers}
+                                    setAlbumCovers={setAlbumCovers}
+                                    router={router}
+                                    authToken={authToken}
+                                    me={me}
+                                />
+                                </div>
+                            ))}
                         </div>
                     </Skeleton>
 
-                    <h2 className="text-2xl font-bold mt-8">Feed</h2>
+                    <h2 className="mt-12">Feed</h2>
+
+                    <NewPostModal isOpen={newPostModalIsOpen} onOpenChange={newPostModalOnOpenChange}></NewPostModal>
+                    <RecModal isOpen={recModalIsOpen} onOpenChange={recModalOnOpenChange}></RecModal>
+                    <TrackModal isOpen={trackModalIsOpen} onOpenChange={trackModalOnOpenChange}></TrackModal>
+
+                    {me && <Dropdown>
+                        <DropdownTrigger>
+                            <Button color="secondary" className="mb-2"><Add />New Post</Button>
+                        </DropdownTrigger>
+                        <DropdownMenu>
+                            <DropdownItem key="new" onPress={newPostModalOnOpen}>New post</DropdownItem>
+                            <DropdownItem key="rec" onPress={recModalOnOpen}>New recommendation</DropdownItem>
+                            <DropdownItem key="track" onPress={trackModalOnOpen}>New album listened</DropdownItem>
+                        </DropdownMenu>
+                    </Dropdown>}
                     
                     {initialFeedLoading ? (
                         <div className="flex justify-center items-center h-64">
@@ -528,11 +535,10 @@ export default function Profile() {
                         </div>
                     ) : (
                         <Feed 
-                        username={username}
-                        authToken={authToken}
-                        me={me}
-                        initialFeed={initialFeed}
-                        initialLiked={liked}
+                            username={username}
+                            authToken={authToken}
+                            initialFeed={initialFeed}
+                            initialLiked={liked}
                         />
                     )}
                 </div>

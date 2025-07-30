@@ -75,7 +75,7 @@ export default function Auth() {
                     {error && <p className="text-danger mb-4">{error}</p>}
                     {authMode === "register" && (
                         <Input 
-                            label="Email" 
+                            label="Email"
                             type="email" 
                             className="w-[40vw] md:w-80 mb-2" 
                             isRequired

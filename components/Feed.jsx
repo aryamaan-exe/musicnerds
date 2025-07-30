@@ -3,72 +3,81 @@ import axios from "axios";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import {
-  Card,
-  CardHeader,
-  CardBody,
-  CardFooter,
-  Image,
-  Button,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  Snippet,
-  Spinner,
+    Avatar,
+    Card,
+    CardHeader,
+    CardBody,
+    CardFooter,
+    Image,
+    Button,
+    Popover,
+    PopoverTrigger,
+    PopoverContent,
+    Snippet,
+    Spinner,
 } from "@heroui/react";
 
 dayjs.extend(relativeTime);
 
-export default function Feed({ username, authToken, me, initialFeed, initialLiked }) {
+export default function Feed({ username, authToken, initialFeed, initialLiked, fyp }) {
     const [feed, setFeed] = useState(initialFeed || []);
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(2);
     const [liked, setLiked] = useState(initialLiked || []);
     const [likeCounts, setLikeCounts] = useState(
-    initialFeed?.map((post) => parseInt(post.likes, 10)) || []
+        initialFeed?.map((post) => parseInt(post.likes, 10)) || []
     );
     const observer = useRef();
 
     const loadFeed = useCallback(
-    async (username, page) => {
-        if (loading || !hasMore) return;
+        async (username, page) => {
+            if (loading || !hasMore) return;
 
-        setLoading(true);
-        try {
-        const response = await axios.get("/api/feed", {
-            headers: { "Cache-Control": "no-cache" },
-            params: { username, page, _t: Date.now() },
-        });
-        
-        const newItems = response.data?.posts || [];
-        
-        if (newItems.length === 0) {
-            setHasMore(false);
-            return;
-        }
+            setLoading(true);
+            try {
+                let response;
+                if (fyp) {
+                    response = await axios.get("/api/fyp", {
+                        headers: { "Cache-Control": "no-cache" },
+                        params: { username, page, _t: Date.now() },
+                    });
+                } else {
+                    response = await axios.get("/api/feed", {
+                        headers: { "Cache-Control": "no-cache" },
+                        params: { username, page, _t: Date.now() },
+                    });
+                }
+                
+                const newItems = response.data?.posts || [];
+                
+                if (newItems.length === 0) {
+                    setHasMore(false);
+                    return;
+                }
 
-        setFeed((prev) => [...prev, ...newItems]);
-        setLikeCounts((prev) => [
-            ...prev,
-            ...newItems.map((post) => parseInt(post.likes, 10)),
-        ]);
-        setPage((prev) => prev + 1);
-        } catch (err) {
-        console.error("Error loading more feed:", err);
-        } finally {
-        setLoading(false);
-        }
-    },
-    [loading, hasMore]
+                setFeed((prev) => [...prev, ...newItems]);
+                setLikeCounts((prev) => [
+                    ...prev,
+                    ...newItems.map((post) => parseInt(post.likes, 10)),
+                ]);
+                setPage((prev) => prev + 1);
+            } catch (err) {
+                console.error("Error loading more feed:", err);
+            } finally {
+                setLoading(false);
+            }
+        },
+        [loading, hasMore]
     );
 
     async function likePost(currentUsername, postID, remove) {
     try {
         await axios.post("/api/like", {
-        username: currentUsername,
-        authToken,
-        postID,
-        remove,
+            username: currentUsername,
+            authToken,
+            postID,
+            remove,
         });
 
         setLiked((prev) =>
@@ -167,8 +176,19 @@ export default function Feed({ username, authToken, me, initialFeed, initialLike
                 <div className="md:flex p-4">
                 {post.image && <Image isZoomed src={post.image} width={150} height={150} />}
                 <div className="ml-4">
-                    <CardHeader>
-                    <h3 className="text-lg font-semibold">{post.title}</h3>
+                    <CardHeader className="flex flex-col items-start">
+                        {
+                            fyp && <div className="flex items-center mb-4">
+                                <Avatar
+                                    showFallback
+                                    size="lg"
+                                    className="mr-4"
+                                    src={post.pfp}
+                                    />
+                                <p className="font-semibold text-lg">{post.username}</p>
+                            </div>
+                        }
+                        <h3 className="text-xl font-bold">{post.title}</h3>
                     </CardHeader>
                     <CardBody>
                     {post.body}
