@@ -2,6 +2,7 @@ import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
+import axios from "axios";
 
 export default function Connected() {
     const router = useRouter();
@@ -39,7 +40,7 @@ export default function Connected() {
             window.localStorage.setItem("lastFMSessionKey", session?.key || "");
             window.localStorage.setItem("lastFMUsername", session?.lfmUsername || "");
             const username = window.localStorage.getItem("username");
-            router.push(`/users/${username}`)
+            await router.push(`/users/${username}`);
         }
 
         connect();
