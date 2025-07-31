@@ -369,7 +369,7 @@ export default function Profile() {
             : <>
                 <div className="flex justify-center items-center my-8 mx-4">
                     <Skeleton className="rounded-3xl" isLoaded={profileLoading}>
-                        <Card className="w-[55vh]">
+                        <Card className="lg:w-[32vw] w-[90vw]">
                             <CardHeader className="flex justify-between">
                                     <div className="flex flex-row">
                                         {me && 

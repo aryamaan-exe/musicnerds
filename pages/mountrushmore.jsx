@@ -35,7 +35,7 @@ export default function MountRushmore() {
     return <>
         <Navbar />
         <div className="min-h-[85vh]">
-            <div className="flex justify-center my-8">
+            <div className="flex justify-center m-8">
             <div>
                 <h2>Editing Mount Rushmore</h2>
                 <SearchBar onSearch={onSearch} loading={loading} />
