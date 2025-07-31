@@ -2,7 +2,8 @@ import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
 
 export default function Featured() {
-    return <>
+    return (
+    <>
         <Navbar />
         
         <main className="h-[85vh] flex items-center lg:ml-64 ml-8">
@@ -12,5 +13,5 @@ export default function Featured() {
         </main>
 
         <Footer />
-    </>;
+    </>);
 }

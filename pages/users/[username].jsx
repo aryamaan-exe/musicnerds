@@ -295,14 +295,14 @@ export default function Profile() {
         
         try {
             const userData = await checkUser(
-            router.query.username,
-            storedAuthToken,
-            window.localStorage.getItem("username")
+                router.query.username,
+                storedAuthToken,
+                window.localStorage.getItem("username")
             );
             
             if (!userData) {
-            set404(true);
-            return;
+                set404(true);
+                return;
             }
 
             setBio(userData.bio);
@@ -310,8 +310,8 @@ export default function Profile() {
             setMe(userData.me);
             setFollowing(userData.following);
             setProfileStat({
-            count: userData.followers,
-            name: `follower${userData.followers === 1 ? '' : 's'}`
+                count: userData.followers,
+                name: `follower${userData.followers === 1 ? '' : 's'}`
             });
 
             const likesData = await checkLikes(window.localStorage.getItem("username"));
@@ -325,22 +325,11 @@ export default function Profile() {
             setInitialFeed(feedData.posts || []);
             
             if (!window.localStorage.getItem("lastFMSessionKey")) {
-            const lastFMData = await getLastFMUrl(router.query.username);
-            setLastFMUrl(lastFMData?.url || "");
+                const lastFMData = await getLastFMUrl(router.query.username);
+                setLastFMUrl(lastFMData?.url || "");
             } else {
-            const listening = await pullCurrentlyListening(window.localStorage.getItem("lastFMUsername"));
-            setCurrentlyListening(listening || "");
-            }
-            
-            if (router.query.token && (!window.localStorage.getItem("lastFMSessionKey"))) {
-            const session = await connectLastFM(
-                window.localStorage.getItem("username"),
-                window.localStorage.getItem("authToken"),
-                router.query.token
-            );
-            window.localStorage.setItem("lastFMSessionKey", session?.key || "");
-            window.localStorage.setItem("lastFMUsername", session?.lfmUsername || "");
-            setLastFMUrl("");
+                const listening = await pullCurrentlyListening(window.localStorage.getItem("lastFMUsername"));
+                setCurrentlyListening(listening || "");
             }
         } catch (error) {
             console.error("Profile initialization error:", error);

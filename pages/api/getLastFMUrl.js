@@ -9,7 +9,7 @@ export default async function handler(req, res) {
       "secret" : process.env.LASTFM_SECRET
     });
 
-    let url = lfm.getAuthenticationUrl({"cb": `${process.env.FRONTEND_URL}/users/${username}` });
+    let url = lfm.getAuthenticationUrl({"cb": `${process.env.FRONTEND_URL}/connected` });
     console.log(url);
     
     res.status(200).json({ url })
