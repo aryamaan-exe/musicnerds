@@ -6,6 +6,27 @@ import { useEffect } from "react";
 export default function Connected() {
     const router = useRouter();
 
+    async function connectLastFM(username, authToken, token) {
+        try {
+            const response = await axios.get("/api/connectLastFM", {
+                params: {
+                    username,
+                    authToken,
+                    token // lastfm token
+                }
+            });
+
+            return response.data;
+        } catch (err) {
+            if (err.response) {
+                console.log(err);
+                return { success: false, status: err.response.status, error: err.response.data.error };
+            } else {
+                return { success: false, error: err.message };
+            }
+        }
+    }
+
     useEffect(() => {
         async function connect() {
             if (!router?.query.token) return;
