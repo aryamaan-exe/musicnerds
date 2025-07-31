@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       const url = btoa(getRandomValues(new Uint8Array(4)));
 
       await pool.query(
-        "INSERT INTO feed (id, title, body, image, timestamp, url) VALUES ($1, $2, $3, $4, NOW(), $5)",
+        "INSERT INTO feed (id, title, body, image, timestamp, url, likes) VALUES ($1, $2, $3, $4, NOW(), $5, 0)",
         [userId, title, body, image, url]
       );
 

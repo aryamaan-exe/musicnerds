@@ -29,6 +29,12 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
         initialFeed?.map((post) => parseInt(post.likes, 10)) || []
     );
     const observer = useRef();
+    const formatter = new Intl.NumberFormat('en', {
+        notation: 'compact',
+        compactDisplay: 'short',
+        maximumFractionDigits: 1
+    });
+
 
     const loadFeed = useCallback(
         async (username, page) => {
@@ -72,26 +78,26 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
     );
 
     async function likePost(currentUsername, postID, remove) {
-    try {
-        await axios.post("/api/like", {
-            username: currentUsername,
-            authToken,
-            postID,
-            remove,
-        });
+        try {
+            await axios.post("/api/like", {
+                username: currentUsername,
+                authToken,
+                postID,
+                remove,
+            });
 
-        setLiked((prev) =>
-        remove ? prev.filter((id) => id !== postID) : [...prev, postID]
-        );
+            setLiked((prev) =>
+            remove ? prev.filter((id) => id !== postID) : [...prev, postID]
+            );
 
-        setLikeCounts((prev) =>
-        prev.map((count, i) =>
-            feed[i].postid === postID ? count + (remove ? -1 : 1) : count
-        )
-        );
-    } catch (err) {
-        console.error(err);
-    }
+            setLikeCounts((prev) =>
+            prev.map((count, i) =>
+                feed[i].postid === postID ? count + (remove ? -1 : 1) : count
+            )
+            );
+        } catch (err) {
+            console.error(err);
+        }
     }
 
     const lastCardRef = useCallback(
@@ -100,12 +106,12 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
         if (observer.current) observer.current.disconnect();
 
         observer.current = new IntersectionObserver(
-        async (entries) => {
-            if (entries[0].isIntersecting && hasMore) {
-            await loadFeed(username, page);
-            }
-        },
-        { threshold: 0.1 }
+            async (entries) => {
+                if (entries[0].isIntersecting && hasMore) {
+                    await loadFeed(username, page);
+                }
+            },
+            { threshold: 0.1 }
         );
 
         if (node) observer.current.observe(node);
@@ -215,7 +221,7 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
                         fillColor={isLiked ? "#f31260" : "none"}
                         />
                     </Button>
-                    <p>{likeCounts[index]}</p>
+                    <p>{formatter.format(likeCounts[index])}</p>
                     <Popover placement="up">
                         <PopoverTrigger>
                         <Button isIconOnly variant="flat" radius="full">

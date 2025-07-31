@@ -6,7 +6,9 @@ import bcrypt from "bcrypt";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
-    const { username, password } = req.body;
+    let { username, password } = req.body;
+
+    username = username.trim().toLowerCase();
 
     try {
       const result = await pool.query(

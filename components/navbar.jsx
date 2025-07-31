@@ -82,9 +82,8 @@ export const Navbar = () => {
           
           <Dropdown>
             <DropdownTrigger>
-              <div data-theme="light" className="rounded-3xl">
+              <div className="p-1 rounded-3xl bg-white">
                 <Avatar
-                  isBordered
                   showFallback
                   size="md"
                   src={pfp}
@@ -110,7 +109,6 @@ export const Navbar = () => {
                   () => {
                     window.localStorage.removeItem("username");
                     window.localStorage.removeItem("authToken");
-                    window.localStorage.removeItem("lastFMSessionKey");
                     router.push("/auth");
                   }
                 }
@@ -142,6 +140,15 @@ export const Navbar = () => {
                       <ListboxItem onPress={() => {
                         router.push(`/users/${username}`);
                       }}>Profile</ListboxItem>
+                      <ListboxItem onPress={() => {
+                        router.push("/recs");
+                      }}>Recs</ListboxItem>
+                      <ListboxItem onPress={() => {
+                        router.push("/featured");
+                      }}>Featured</ListboxItem>
+                      <ListboxItem onPress={() => {
+                        router.push("/fyp");
+                      }}>For You</ListboxItem>
                       <ListboxItem className="text-danger" onPress={
                         () => {
                           window.localStorage.removeItem("username");

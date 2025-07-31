@@ -74,22 +74,28 @@ export default function Fyp() {
         <>
             <Navbar />
             
-            <main className="flex-grow container mx-auto p-4 flex justify-center items-center">
+            <main className="flex-grow container p-4 flex items-center">
                 <div className="flex flex-col">
-                    <h1 className="text-3xl font-bold mb-4">For You</h1>
-                    
                     {initialFeedLoading ? (
                         <div className="flex justify-center items-center h-64">
                         <Spinner size="lg" color="secondary" />
                         </div>
                     ) : (
-                    <Feed
-                        username={username}
-                        authToken={authToken}
-                        initialFeed={initialFeed}
-                        initialLiked={initialLiked}
-                        fyp
-                    />)}
+                    initialFeed.length ? <div>
+                        <h1 className="text-3xl font-bold m-4">For You</h1>
+                        <Feed
+                            username={username}
+                            authToken={authToken}
+                            initialFeed={initialFeed}
+                            initialLiked={initialLiked}
+                            fyp
+                        />
+                        </div> : <div className="flex lg:ml-64 items-center h-[80vh]">
+                                    <div>
+                                        <h1>Couldn't load feed</h1>
+                                        <p>Start by following some users.</p>
+                                    </div>
+                                </div>)}
                 </div>
             </main>
             <Footer />

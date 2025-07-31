@@ -54,7 +54,7 @@ export default function Recs() {
                 <>
                     <div className="flex justify-center items-center my-8 mx-4">
                         <div className="flex flex-col">
-                            {recsLoaded ? recommendations.map((album) => {
+                            {recsLoaded ? recommendations?.map((album) => {
                                 return <div className="mb-4">
                                             <Card>
                                                 <CardHeader className="flex-row items-start">

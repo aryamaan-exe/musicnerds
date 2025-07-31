@@ -83,18 +83,18 @@ export function MtRush({ spot, albumCovers, setAlbumCovers, router, authToken, m
         <div onMouseEnter={() => {setCloseButtonVisible(true)}} onMouseLeave={() => {setCloseButtonVisible(false)}} className="relative z-0">
             <>
                 {me && <Button className={closeButtonVisible ? "absolute z-50 ml-[115px] mt-1" : "hidden"} isIconOnly color="danger" variant="faded" size="sm" onPress={() => {
-                    let albumCoversCopy = albumCovers.copyWithin();
-                    albumCovers.splice(spot-1,1,"");
+                    let albumCoversCopy = [...albumCovers];
+                    albumCoversCopy[spot - 1] = "";
                     setAlbumCovers(albumCoversCopy);
                     removeMtRush(router.query.username, authToken, spot);
                 }}>
                     <Close />
                 </Button>}
                 <Image isZoomed 
-                src={albumCovers[spot - 1]}
-                width={150} 
-                height={150} 
-                className="w-full h-auto object-cover rounded"
+                    src={albumCovers[spot - 1]}
+                    width={150} 
+                    height={150} 
+                    className="w-full h-auto object-cover rounded"
                 />
 
             </>
@@ -332,7 +332,7 @@ export default function Profile() {
             setCurrentlyListening(listening || "");
             }
             
-            if (router.query.token) {
+            if (router.query.token && (!window.localStorage.getItem("lastFMSessionKey"))) {
             const session = await connectLastFM(
                 window.localStorage.getItem("username"),
                 window.localStorage.getItem("authToken"),
@@ -500,6 +500,7 @@ export default function Profile() {
                             {Array(4).fill(1).map((_, i) => (
                                 <div className="w-[150px] h-[150px]">
                                 <MtRush
+                                    key={i + 1}
                                     spot={i + 1}
                                     albumCovers={albumCovers}
                                     setAlbumCovers={setAlbumCovers}
@@ -531,7 +532,7 @@ export default function Profile() {
                     
                     {initialFeedLoading ? (
                         <div className="flex justify-center items-center h-64">
-                        <Spinner size="lg" color="secondary" />
+                            <Spinner size="lg" color="secondary" />
                         </div>
                     ) : (
                         <Feed 

@@ -23,10 +23,18 @@ export default async function handler(req, res) {
           "DELETE FROM likes WHERE postid=$1 AND id=$2",
           [postID, userId]
         );
+        await pool.query(
+          "UPDATE feed SET likes=likes-1 WHERE postid=$1",
+          [postID]
+        );
       } else {
         await pool.query(
           "INSERT INTO likes (postid, id) VALUES ($1, $2)",
           [postID, userId]
+        );
+        await pool.query(
+          "UPDATE feed SET likes=likes+1 WHERE postid=$1",
+          [postID]
         );
       }
 
