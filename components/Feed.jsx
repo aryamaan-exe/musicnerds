@@ -175,7 +175,6 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
         <div className="flex flex-col items-center w-full">
         {feed.map((post, index) => {
             const isLast = index === feed.length - 1;
-            const isLiked = liked.includes(post.postid);
 
             return (
             <Card key={post.postid} className="m-4 w-[60vw]" ref={isLast ? lastCardRef : null}>
@@ -208,17 +207,26 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
                         variant="flat"
                         radius="full"
                         onPress={async () => {
-                            if (!authToken) return;
-                            await likePost(
-                                localStorage.getItem("username"),
-                                post.postid,
-                                isLiked
-                            );
-                        }}
+                                if (!authToken) return;
+
+                                setLiked(prev =>
+                                prev.includes(post.postid)
+                                    ? prev.filter(id => id !== post.postid) 
+                                    : [...prev, post.postid]                
+                                );
+
+                                
+                                await likePost(
+                                    localStorage.getItem("username"),
+                                    post.postid,
+                                    !liked.includes(post.postid)
+                                )
+                            }
+                        }
                     >
                         <HeartIcon
-                        strokeColor={isLiked ? "#f31260" : "white"}
-                        fillColor={isLiked ? "#f31260" : "none"}
+                            strokeColor={liked.includes(post.postid) ? "#f31260" : "white"}
+                            fillColor={liked.includes(post.postid) ? "#f31260" : "none"}
                         />
                     </Button>
                     <p>{formatter.format(likeCounts[index])}</p>
