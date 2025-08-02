@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash"});
 
-      const prompt = `Given the user's top tracks: ${topTrackNames.join(", ")}. Recommend 10 similar albums. All of the artists should be new to the user (i.e. should not be in the list provided). Try to find recommendations that are a bit more underground but still within the same genre/subgenre. Provide the output as a JSON array of objects, where each object has "title", "artist" properties. For example: [{"title": "Album Title", "artist": "Artist Name"}].`;
+      const prompt = `Given the user's top tracks: ${topTrackNames.join(", ")}. Recommend 10 similar albums AND DO NOT USE ANY ARTISTS FROM THE LIST. Try to find recommendations that are a bit more underground but still within the same genre/subgenre. Provide the output as a JSON array of objects, where each object has "title", "artist" properties. For example: [{"title": "Album Title", "artist": "Artist Name"}].`;
 
       const result = await model.generateContent(prompt);
       const response = result.response;

@@ -5,9 +5,10 @@ import { LastFMButton } from "./users/[username]";
 import { Card, CardBody, CardHeader, Image, Skeleton } from "@heroui/react";
 import { getLastFMUrl } from "./users/[username]";
 import axios from "axios";
+import { useRouter } from "next/router";
 
 export default function Recs() {
-    async function getRecommendations(lfmUsername, setState) {
+    async function getRecommendations(lfmUsername) {
         try {
             const response = await axios.get("/api/recommendations", {
                 params: { lfmUsername }
@@ -24,10 +25,13 @@ export default function Recs() {
     const [lastFMUrl, setLastFMUrl] = useState("");
     const [recommendations, setRecommendations] = useState([]);
     const [recsLoaded, setRecsLoaded] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         async function x() {
-            if (!window.localStorage.getItem("authToken")) return;
+            if (!window.localStorage.getItem("authToken")) {
+                router.push("/auth")
+            }
             if (window.localStorage.getItem("lastFMSessionKey")) {
                 setLastFMConnected(true);
             } else {

@@ -128,34 +128,34 @@ export const Navbar = () => {
               {(onClose) => (
                 <>
                   <DrawerHeader className="flex flex-row gap-2 items-center">
-                    <Avatar
+                    {pfp && <Avatar
                       showFallback
                       size="md"
                       src={pfp}
-                    />
-                    {username}
+                    />}
+                    <p className="text-2xl font-semibold">{username}</p>
                   </DrawerHeader>
                   <DrawerBody>
                     <Listbox>
                       <ListboxItem onPress={() => {
                         router.push(`/users/${username}`);
-                      }}>Profile</ListboxItem>
+                      }}><p className="text-xl">Profile</p></ListboxItem>
                       <ListboxItem onPress={() => {
                         router.push("/recs");
-                      }}>Recs</ListboxItem>
+                      }}><p className="text-xl">Recs</p></ListboxItem>
                       <ListboxItem onPress={() => {
                         router.push("/featured");
-                      }}>Featured</ListboxItem>
+                      }}><p className="text-xl">Featured</p></ListboxItem>
                       <ListboxItem onPress={() => {
                         router.push("/fyp");
-                      }}>For You</ListboxItem>
-                      <ListboxItem className="text-danger" onPress={
+                      }}><p className="text-xl">For You</p></ListboxItem>
+                      {username && <ListboxItem className="text-danger" onPress={
                         () => {
                           window.localStorage.removeItem("username");
                           window.localStorage.removeItem("authToken");
                           router.push("/auth");
                         }
-                      }>Logout</ListboxItem>
+                      }><p className="text-xl">Logout</p></ListboxItem>}
                     </Listbox>
                   </DrawerBody>
                 </>
