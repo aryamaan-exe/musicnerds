@@ -22,6 +22,7 @@ import {
     ReportIcon,
     ReplyIcon
 } from "../components/icons";
+import { ReplyCard } from "./replyCard";
 
 dayjs.extend(relativeTime);
 
@@ -41,6 +42,13 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
     const [likeCounts, setLikeCounts] = useState(() =>
         (initialFeed || []).reduce((acc, post) => {
             acc[post.postid] = parseInt(post.likes, 10);
+            return acc;
+        }, {})
+    );
+
+    const [currentlyReplying, setCurrentlyReplying] = useState(() =>
+        (initialFeed || []).reduce((acc, post) => {
+            acc[post.postid] = false;
             return acc;
         }, {})
     );
@@ -118,8 +126,11 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
                 {feed.map((post, index) => {
                     const isLast = index === feed.length - 1;
                     const isLiked = Boolean(liked[post.postid]);
+                    const isReplying = Boolean(currentlyReplying[post.postid]);
                     const count = likeCounts[post.postid] ?? 0;
+
                     return (
+                        <>
                         <Card key={post.postid} className="m-4 w-[60vw]" ref={isLast ? lastCardRef : null}>
                             <div className="md:flex p-4">
                                 {post.image && <Image isZoomed src={post.image} width={150} height={150} />}
@@ -166,6 +177,21 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
                                             />
                                         </Button>
                                         <p>{formatter.format(count)}</p>
+                                        <Button 
+                                            isIconOnly
+                                            variant="flat"
+                                            radius="full"
+                                            onPress={() => {
+                                                if (!authToken) return;
+                                                setCurrentlyReplying(prev => ({
+                                                    ...prev,
+                                                    [post.postid]: !prev[post.postid],
+                                                }))
+                                            }}>
+                                            <ReplyIcon />
+                                        </Button>
+                                        <p>{formatter.format(post.replycount)}</p>
+
                                         <Popover placement="up">
                                             <PopoverTrigger>
                                                 <Button isIconOnly variant="flat" radius="full">
@@ -178,10 +204,7 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
                                                 </Snippet>
                                             </PopoverContent>
                                         </Popover>
-                                        <Button isIconOnly variant="flat" radius="full">
-                                            <ReplyIcon />
-                                        </Button>
-                                        <p>{formatter.format(post.replycount)}</p>
+                                        
                                         <Button isIconOnly variant="flat" radius="full">
                                             <ReportIcon />
                                         </Button>
@@ -189,6 +212,8 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
                                 </div>
                             </div>
                         </Card>
+                        {currentlyReplying[post.postid] && <ReplyCard post={post} />}
+                        </>
                     );
                 })}
                 {loading && hasMore && <Spinner size="lg" className="m-8" color="secondary" />}
