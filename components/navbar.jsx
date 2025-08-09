@@ -147,15 +147,16 @@ export const Navbar = () => {
                         router.push("/featured");
                       }}><p className="text-xl">Featured</p></ListboxItem>
                       <ListboxItem onPress={() => {
-                        router.push("/fyp");
+                        router.push("/fyp");  
                       }}><p className="text-xl">For You</p></ListboxItem>
-                      {username && <ListboxItem className="text-danger" onPress={
+                      {username ? <ListboxItem className="text-danger" onPress={
                         () => {
                           window.localStorage.removeItem("username");
                           window.localStorage.removeItem("authToken");
                           router.push("/auth");
                         }
-                      }><p className="text-xl">Logout</p></ListboxItem>}
+                      }><p className="text-xl">Logout</p></ListboxItem> :
+                      <ListboxItem onPress={() => router.push("/auth")}><p className="text-xl">Login</p></ListboxItem>}
                     </Listbox>
                   </DrawerBody>
                 </>
