@@ -313,9 +313,9 @@ export default function Profile() {
                     if (listening.value === 0) {
                         const lastFMData = await getLastFMUrl(router.query.username);
                         setLastFMUrl(lastFMData?.url || "");
+                    } else {
+                        setCurrentlyListening(listening.value || "");
                     }
-                } else {
-                    setCurrentlyListening(listening || "");
                 }
             } catch (error) {
                 console.error("Profile initialization error:", error);
