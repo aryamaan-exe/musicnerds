@@ -4,7 +4,6 @@ import { pool } from "./utils/db";
 export default async function handler(req, res) {
   if (req.method === "GET") {
     const { username } = req.query;
-    console.log(username);
 
     let lfm = new LastfmAPI({
       "api_key" : process.env.LASTFM_KEY,
@@ -24,6 +23,7 @@ export default async function handler(req, res) {
     }
 
     const lfmUsername = lfmResult.rows[0].lfmusername;
+    console.warn("Username:", username, "User ID:", id, "Last.fm Username:", lfmUsername);
 
     lfm.user.getRecentTracks({user: lfmUsername, limit: 1}, (err, tracks) => {
       if (err) console.log(err);
