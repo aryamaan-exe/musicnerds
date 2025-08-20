@@ -4,6 +4,7 @@ import { pool } from "./utils/db";
 export default async function handler(req, res) {
   if (req.method === "GET") {
     const { username } = req.query;
+    console.log(username);
 
     let lfm = new LastfmAPI({
       "api_key" : process.env.LASTFM_KEY,

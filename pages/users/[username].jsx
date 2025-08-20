@@ -247,6 +247,7 @@ export default function Profile() {
 
     async function pullCurrentlyListening(username) {
         try {
+            console.log(username);
             const response = await axios.get("/api/pullCurrentlyListening", {
                 params: {
                     username,
@@ -255,7 +256,6 @@ export default function Profile() {
             
             return response.data.message;
         } catch (err) {
-            console.error(err);
             if (err.response) {
                 return "Error";
             } else {
