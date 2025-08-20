@@ -266,57 +266,65 @@ export default function Profile() {
 
     useEffect(() => {
         async function initializeProfile() {
-        if (!router.query.username) return;
-        
-        const storedAuthToken = window.localStorage.getItem("authToken");
-        setAuthToken(storedAuthToken);
-        
-        try {
-            const userData = await checkUser(
-                router.query.username,
-                storedAuthToken,
-                window.localStorage.getItem("username")
-            );
+            if (!router.query.username) return;
             
-            if (!userData) {
+            const storedAuthToken = window.localStorage.getItem("authToken");
+            setAuthToken(storedAuthToken);
+            
+            try {
+                const [userData, likesData, mtRushData, feedData, listening] = await Promise.allSettled([
+                    checkUser(
+                        router.query.username,
+                        storedAuthToken,
+                        window.localStorage.getItem("username")
+                    ),
+                    checkLikes(window.localStorage.getItem("username")),
+                    getMtRush(router.query.username),
+                    getFeed(router.query.username, 1),
+                    pullCurrentlyListening(window.localStorage.getItem("username"))
+                ]);
+
+                if (userData.status !== "fulfilled" || !userData.value) {
+                    set404(true);
+                    return;
+                }
+
+                setBio(userData.value.bio);
+                setPfp(userData.value.pfp);
+                setMe(userData.value.me);
+                setFollowing(userData.value.following);
+                setProfileStat({
+                    count: userData.value.followers,
+                    name: `follower${userData.value.followers === 1 ? '' : 's'}`
+                });
+
+                if (likesData.status === "fulfilled") {
+                    setLiked(likesData.value.likes || []);
+                }
+                if (mtRushData.status === "fulfilled") {
+                    setAlbumCovers(mtRushData.value?.data?.mtRush || []);
+                    setMtRushLoaded(true);
+                }
+                if (feedData.status === "fulfilled") {
+                    setInitialFeed(feedData.value.posts || []);
+                }
+                
+                if (listening.status === "fulfilled") {
+                    if (listening.value === 0) {
+                        const lastFMData = await getLastFMUrl(router.query.username);
+                        setLastFMUrl(lastFMData?.url || "");
+                    }
+                } else {
+                    setCurrentlyListening(listening || "");
+                }
+            } catch (error) {
+                console.error("Profile initialization error:", error);
                 set404(true);
-                return;
+            } finally {
+                setProfileLoading(true);
+                setInitialFeedLoading(false);
             }
-
-            setBio(userData.bio);
-            setPfp(userData.pfp);
-            setMe(userData.me);
-            setFollowing(userData.following);
-            setProfileStat({
-                count: userData.followers,
-                name: `follower${userData.followers === 1 ? '' : 's'}`
-            });
-
-            const likesData = await checkLikes(window.localStorage.getItem("username"));
-            setLiked(likesData.likes || []);
-            
-            const mtRushData = await getMtRush(router.query.username);
-            setAlbumCovers(mtRushData?.data?.mtRush || []);
-            setMtRushLoaded(true);
-            
-            const feedData = await getFeed(router.query.username, 1);
-            setInitialFeed(feedData.posts || []);
-        
-            const listening = await pullCurrentlyListening(window.localStorage.getItem("username"));
-            if (listening === 0) {
-                const lastFMData = await getLastFMUrl(router.query.username);
-                setLastFMUrl(lastFMData?.url || "");
-            } else {
-                setCurrentlyListening(listening || "");
-            }
-        } catch (error) {
-            console.error("Profile initialization error:", error);
-            set404(true);
-        } finally {
-            setProfileLoading(true);
-            setInitialFeedLoading(false);
         }
-    }
 
         initializeProfile();
     }, [router.query.username, router.query.token]);

@@ -58,13 +58,12 @@ export function ReplyCard({ post }) {
             </CardBody>
             <CardFooter>
             <Button isLoading={loading} color="secondary" onPress={async () => {
+                if (replyContent.length === 0) return;
                 setLoading(true);
-                if (replyContent != "") {
-                    await reply(window.localStorage.getItem("username"),
-                                window.localStorage.getItem("authToken"),
-                                replyContent,
-                                post.postid);
-                }
+                await reply(window.localStorage.getItem("username"),
+                            window.localStorage.getItem("authToken"),
+                            replyContent,
+                            post.postid);
             }}>Reply</Button>
             </CardFooter>
         </Card>

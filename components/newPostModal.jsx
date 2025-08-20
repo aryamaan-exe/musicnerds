@@ -52,6 +52,8 @@ export function NewPostModal({ isOpen, onOpenChange }) {
                             </ModalBody>
                             <ModalFooter>
                             <Button isLoading={loading} color="secondary" onPress={async () => {
+                                if (postContent.length === 0 || title.length === 0) return;
+                                
                                 setLoading(true);
                                 const response = await newPost(title, postContent);
                                 if (response) {
