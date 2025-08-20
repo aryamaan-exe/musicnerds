@@ -190,7 +190,7 @@ export default function Feed({ username, authToken, initialFeed, initialLiked, f
                                             }}>
                                             <ReplyIcon />
                                         </Button>
-                                        <p>{formatter.format(post.replycount)}</p>
+                                        <p>{formatter.format(post.replies)}</p>
 
                                         <Popover placement="up">
                                             <PopoverTrigger>

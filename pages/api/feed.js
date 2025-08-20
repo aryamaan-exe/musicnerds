@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       const offset = (pageNum - 1) * 10;
 
       const feedResult = await pool.query(
-        "SELECT postid, title, body, image, timestamp, likes, url, replies as replyCount FROM feed f WHERE id=$1 ORDER BY timestamp DESC LIMIT 10 OFFSET $2",
+        "SELECT postid, title, body, image, timestamp, likes, url, replies FROM feed f WHERE id=$1 ORDER BY timestamp DESC LIMIT 10 OFFSET $2",
         [userId, offset]
       );
 

@@ -245,16 +245,14 @@ export default function Profile() {
         }
     }
 
-    async function pullCurrentlyListening(lfmUsername) {
+    async function pullCurrentlyListening(username) {
         try {
             const response = await axios.get("/api/pullCurrentlyListening", {
                 params: {
-                    lfmUsername,
+                    username,
                 }
             });
-
-            console.log(response.data);
-
+            
             return response.data.message;
         } catch (err) {
             if (err.response) {
@@ -302,12 +300,12 @@ export default function Profile() {
             
             const feedData = await getFeed(router.query.username, 1);
             setInitialFeed(feedData.posts || []);
-            
-            if (!window.localStorage.getItem("lastFMSessionKey")) {
+        
+            const listening = await pullCurrentlyListening(window.localStorage.getItem("username"));
+            if (listening === 0) {
                 const lastFMData = await getLastFMUrl(router.query.username);
                 setLastFMUrl(lastFMData?.url || "");
             } else {
-                const listening = await pullCurrentlyListening(window.localStorage.getItem("lastFMUsername"));
                 setCurrentlyListening(listening || "");
             }
         } catch (error) {

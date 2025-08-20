@@ -32,14 +32,12 @@ export default function Connected() {
         async function connect() {
             if (!router?.query.token) return;
             
+            const username = window.localStorage.getItem("username");
             const session = await connectLastFM(
-                window.localStorage.getItem("username"),
+                username,
                 window.localStorage.getItem("authToken"),
                 router.query.token
             );
-            window.localStorage.setItem("lastFMSessionKey", session?.key || "");
-            window.localStorage.setItem("lastFMUsername", session?.lfmUsername || "");
-            const username = window.localStorage.getItem("username");
             await router.push(`/users/${username}`);
         }
 
