@@ -22,7 +22,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    const lfmUsername = lfmResult.rows[0].lfmusername;
+    const lfmUsername = lfmResult.rows[0].lfmusername || lfmResult.rows[0].lfmUsername;
     console.warn("Username:", username, "User ID:", id, "Last.fm Username:", lfmUsername);
 
     lfm.user.getRecentTracks({user: lfmUsername, limit: 1}, (err, tracks) => {
