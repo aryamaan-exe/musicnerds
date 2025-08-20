@@ -255,6 +255,7 @@ export default function Profile() {
             
             return response.data.message;
         } catch (err) {
+            console.error(err);
             if (err.response) {
                 return "Error";
             } else {
